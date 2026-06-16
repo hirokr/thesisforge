@@ -1,0 +1,9 @@
+[project]
+name = "thesisforge-api"
+version = "0.1.0"
+description = "FastAPI backend for ThesisForge"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

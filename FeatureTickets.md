@@ -16,6 +16,8 @@
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Create the initial monorepo structure for ThesisForge with separate frontend and backend applications. The frontend should use Next.js, Tailwind CSS, and shadcn/ui. The backend should use FastAPI. Include shared configuration files, environment examples, README, and basic local development setup.
 
@@ -42,6 +44,8 @@ Build the initial ThesisForge monorepo with `apps/web` for a Next.js frontend an
 ## TF-002: Configure Global Design System
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Implement the ThesisForge design system in the frontend using Tailwind CSS. Add brand colors, typography, spacing, border radius, shadows, and reusable UI tokens.
@@ -76,6 +80,8 @@ Implement the ThesisForge design system in the Next.js frontend. Configure Tailw
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Build the authenticated app shell with sidebar navigation, top navbar, and main content area. This layout will wrap dashboard, project, upload, review, and report pages.
 
@@ -106,6 +112,8 @@ Create the authenticated app shell for ThesisForge with a sidebar, top navbar, a
 ## TF-004: Configure Supabase Auth Client
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Set up Supabase Auth in the frontend. Add a Supabase client, environment variables, and session handling utilities.
