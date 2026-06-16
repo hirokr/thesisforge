@@ -141,6 +141,8 @@ Set up Supabase Auth in the Next.js frontend. Create a reusable Supabase client 
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Create a signup page where users can register using email and password.
 
@@ -170,6 +172,8 @@ Build a signup page for ThesisForge at `/register` using Supabase Auth. Include 
 ## TF-006: Build Login Page
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Create a login page where users can sign in using email and password.

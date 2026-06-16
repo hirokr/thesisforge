@@ -13,6 +13,7 @@ __pycache__/
 # next
 .next/
 out/
+*.tsbuildinfo
 
 # python
 *.pyc
