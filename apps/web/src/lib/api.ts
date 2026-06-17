@@ -46,8 +46,27 @@ export type Document = {
   document_type: string;
   size_bytes: number | null;
   status: string;
+  raw_text: string | null;
   created_at: string;
   updated_at: string;
+  parse_status: string;
+  parse_metadata: Record<string, unknown> | null;
+};
+
+export type CreateTextDocumentPayload = {
+  document_type: string;
+  title: string;
+  raw_text: string;
+};
+
+export type TextDocumentResult = {
+  id: string;
+  project_id: string;
+  document_type: string;
+  title: string;
+  parse_status: string;
+  word_count: number;
+  chunk_count: number;
 };
 
 export class ApiError extends Error {
@@ -67,13 +86,15 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     throw new ApiError("You need to sign in again.", 401);
   }
 
+  const headers = new Headers(init.headers);
+  headers.set("Authorization", `Bearer ${token}`);
+  if (!(init.body instanceof FormData) && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
   const response = await fetch(`${readPublicEnv("NEXT_PUBLIC_API_BASE_URL")}${path}`, {
     ...init,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...init.headers
-    }
+    headers
   });
 
   if (!response.ok) {
@@ -111,6 +132,24 @@ export function updateProject(projectId: string, payload: UpdateProjectPayload):
 
 export function listProjectDocuments(projectId: string): Promise<Document[]> {
   return apiRequest<Document[]>(`/projects/${projectId}/documents`);
+}
+
+export function createTextDocument(projectId: string, payload: CreateTextDocumentPayload): Promise<TextDocumentResult> {
+  return apiRequest<TextDocumentResult>(`/projects/${projectId}/documents/text`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function uploadProjectDocument(projectId: string, documentType: string, file: File): Promise<Document> {
+  const formData = new FormData();
+  formData.append("document_type", documentType);
+  formData.append("file", file);
+
+  return apiRequest<Document>(`/projects/${projectId}/documents`, {
+    method: "POST",
+    body: formData
+  });
 }
 
 async function getErrorMessage(response: Response): Promise<string> {

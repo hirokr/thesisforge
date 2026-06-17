@@ -741,6 +741,8 @@ Build a file upload endpoint in FastAPI for ThesisForge. Accept PDF, DOCX, TXT, 
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Create a parser that extracts text from uploaded PDF thesis drafts.
 
@@ -766,6 +768,8 @@ Build a PDF parsing service using PyMuPDF. Extract text from uploaded PDFs, hand
 
 **Priority:** Should-have
 
+**Status:** Done
+
 **Description:**
 Create a parser that extracts text from uploaded DOCX files.
 
@@ -790,6 +794,8 @@ Build a DOCX parser for ThesisForge using python-docx. Extract text, handle malf
 
 **Priority:** Should-have
 
+**Status:** Done
+
 **Description:**
 Create a parser for `.bib` files that extracts references into the `references` table.
 
@@ -813,6 +819,8 @@ Build a BibTeX parser for ThesisForge. Parse uploaded `.bib` files, extract refe
 ## TF-027: Build CSV Result Parser
 
 **Priority:** Nice-to-have
+
+**Status:** Done
 
 **Description:**
 Create a parser for result CSV files.
@@ -840,6 +848,8 @@ Build a CSV parser for ThesisForge result files. Parse CSV files safely, extract
 ## TF-028: Build Upload Page
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Create frontend page for adding thesis materials through file upload or pasted text.

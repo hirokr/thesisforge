@@ -10,8 +10,12 @@ from app.core.auth import AuthenticatedUser
 from app.core.config import get_settings
 from app.models import Document
 from app.schemas.document import DocumentTextCreate
+from app.services.bibtex_parser import parse_bibtex_document
 from app.services.chunking import count_words, replace_document_chunks
+from app.services.csv_parser import parse_csv_document
+from app.services.docx_parser import parse_docx_document
 from app.services.ownership import require_owned_document, require_owned_project
+from app.services.pdf_parser import parse_pdf_document
 
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 SUPPORTED_UPLOAD_EXTENSIONS = {".pdf", ".docx", ".txt", ".bib", ".csv"}
@@ -107,6 +111,15 @@ def create_uploaded_document(
     storage_path.write_bytes(contents)
 
     document.storage_path = str(storage_path)
+    if extension == ".pdf":
+        parse_pdf_document(db, document)
+    elif extension == ".docx":
+        parse_docx_document(db, document)
+    elif extension == ".bib":
+        parse_bibtex_document(db, document)
+    elif extension == ".csv":
+        parse_csv_document(db, document)
+
     db.commit()
     db.refresh(document)
     return document

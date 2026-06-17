@@ -58,6 +58,7 @@ class Document(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(50), default="uploaded", nullable=False)
     raw_text: Mapped[str | None] = mapped_column(Text)
     parse_status: Mapped[str] = mapped_column(String(50), default="pending", nullable=False)
+    parse_metadata: Mapped[dict | None] = mapped_column(JSON)
 
     project: Mapped["ThesisProject"] = relationship(back_populates="documents")
     chunks: Mapped[list["DocumentChunk"]] = relationship(back_populates="document", cascade="all, delete-orphan")
@@ -83,12 +84,15 @@ class Reference(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     project_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), ForeignKey("thesis_projects.id", ondelete="CASCADE"), index=True, nullable=False)
     document_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), ForeignKey("documents.id", ondelete="SET NULL"), index=True)
+    citation_key: Mapped[str | None] = mapped_column(String(255))
     title: Mapped[str | None] = mapped_column(Text)
     authors: Mapped[list[str] | None] = mapped_column(JSON)
     year: Mapped[int | None] = mapped_column(Integer)
+    venue: Mapped[str | None] = mapped_column(Text)
     doi: Mapped[str | None] = mapped_column(String(255))
     url: Mapped[str | None] = mapped_column(Text)
     citation_text: Mapped[str | None] = mapped_column(Text)
+    raw_bibtex: Mapped[str | None] = mapped_column(Text)
 
     project: Mapped["ThesisProject"] = relationship()
     document: Mapped["Document"] = relationship(back_populates="references")

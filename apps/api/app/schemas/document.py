@@ -21,6 +21,7 @@ class DocumentRead(BaseModel):
     status: str
     raw_text: str | None
     parse_status: str
+    parse_metadata: dict | None
     created_at: datetime
     updated_at: datetime
 

@@ -3,7 +3,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from uuid import UUID
 
+import fitz
 import pytest
+from docx import Document as DocxDocument
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
@@ -13,7 +15,7 @@ from app.core.auth import AuthenticatedUser, get_current_user
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
-from app.models import Document, DocumentChunk, ThesisProject, UserProfile
+from app.models import Document, DocumentChunk, Reference, ThesisProject, UserProfile
 from app.services.chunking import chunk_text
 
 
@@ -234,6 +236,7 @@ def test_upload_document_stores_metadata_and_file(db: Session, tmp_path: Path, m
     assert body["status"] == "uploaded"
     assert body["parse_status"] == "pending"
     assert body["raw_text"] is None
+    assert body["parse_metadata"] is None
 
     storage_path = Path(body["storage_path"])
     assert storage_path.exists()
@@ -242,6 +245,306 @@ def test_upload_document_stores_metadata_and_file(db: Session, tmp_path: Path, m
     document = db.scalar(select(Document).where(Document.id == UUID(body["id"])))
     assert document is not None
     assert document.storage_path == body["storage_path"]
+
+
+def test_upload_pdf_extracts_text_and_creates_chunks(db: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    records = seed_documents(db)
+    client = client_for(db)
+    pdf_bytes = build_pdf_bytes("Introduction\nThis thesis evaluates agent review workflows.")
+    monkeypatch.setattr(
+        "app.services.documents.get_settings",
+        lambda: SimpleNamespace(upload_storage_dir=str(tmp_path)),
+    )
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents",
+        data={"document_type": "thesis_draft"},
+        files={"file": ("draft.pdf", pdf_bytes, "application/pdf")},
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["filename"] == "draft.pdf"
+    assert body["status"] == "parsed"
+    assert body["parse_status"] == "parsed"
+    assert "agent review workflows" in body["raw_text"]
+
+    chunks = list(
+        db.scalars(
+            select(DocumentChunk)
+            .where(DocumentChunk.document_id == UUID(body["id"]))
+            .order_by(DocumentChunk.chunk_index)
+        )
+    )
+    assert len(chunks) == 1
+    assert "agent review workflows" in chunks[0].content
+
+
+def test_upload_empty_pdf_marks_parse_failed(db: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    records = seed_documents(db)
+    client = client_for(db)
+    pdf_bytes = build_pdf_bytes("")
+    monkeypatch.setattr(
+        "app.services.documents.get_settings",
+        lambda: SimpleNamespace(upload_storage_dir=str(tmp_path)),
+    )
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents",
+        data={"document_type": "thesis_draft"},
+        files={"file": ("scanned.pdf", pdf_bytes, "application/pdf")},
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["status"] == "parse_failed"
+    assert body["parse_status"] == "failed"
+    assert body["raw_text"] is None
+    assert db.scalar(select(DocumentChunk).where(DocumentChunk.document_id == UUID(body["id"]))) is None
+
+
+def test_upload_corrupt_pdf_marks_parse_failed(db: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    records = seed_documents(db)
+    client = client_for(db)
+    monkeypatch.setattr(
+        "app.services.documents.get_settings",
+        lambda: SimpleNamespace(upload_storage_dir=str(tmp_path)),
+    )
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents",
+        data={"document_type": "thesis_draft"},
+        files={"file": ("broken.pdf", b"not a pdf", "application/pdf")},
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["status"] == "parse_failed"
+    assert body["parse_status"] == "failed"
+    assert body["raw_text"] is None
+
+
+def test_upload_docx_extracts_paragraph_text_and_creates_chunks(
+    db: Session,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    records = seed_documents(db)
+    client = client_for(db)
+    docx_bytes = build_docx_bytes(["Introduction", "This thesis evaluates agent review workflows."])
+    monkeypatch.setattr(
+        "app.services.documents.get_settings",
+        lambda: SimpleNamespace(upload_storage_dir=str(tmp_path)),
+    )
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents",
+        data={"document_type": "thesis_draft"},
+        files={
+            "file": (
+                "draft.docx",
+                docx_bytes,
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+        },
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["filename"] == "draft.docx"
+    assert body["status"] == "parsed"
+    assert body["parse_status"] == "parsed"
+    assert "Introduction" in body["raw_text"]
+    assert "agent review workflows" in body["raw_text"]
+
+    chunks = list(
+        db.scalars(
+            select(DocumentChunk)
+            .where(DocumentChunk.document_id == UUID(body["id"]))
+            .order_by(DocumentChunk.chunk_index)
+        )
+    )
+    assert len(chunks) == 1
+    assert "agent review workflows" in chunks[0].content
+
+
+def test_upload_empty_docx_marks_parse_failed(db: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    records = seed_documents(db)
+    client = client_for(db)
+    docx_bytes = build_docx_bytes([])
+    monkeypatch.setattr(
+        "app.services.documents.get_settings",
+        lambda: SimpleNamespace(upload_storage_dir=str(tmp_path)),
+    )
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents",
+        data={"document_type": "thesis_draft"},
+        files={
+            "file": (
+                "empty.docx",
+                docx_bytes,
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+        },
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["status"] == "parse_failed"
+    assert body["parse_status"] == "failed"
+    assert body["raw_text"] is None
+    assert db.scalar(select(DocumentChunk).where(DocumentChunk.document_id == UUID(body["id"]))) is None
+
+
+def test_upload_malformed_docx_marks_parse_failed(db: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    records = seed_documents(db)
+    client = client_for(db)
+    monkeypatch.setattr(
+        "app.services.documents.get_settings",
+        lambda: SimpleNamespace(upload_storage_dir=str(tmp_path)),
+    )
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents",
+        data={"document_type": "thesis_draft"},
+        files={
+            "file": (
+                "broken.docx",
+                b"not a docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+        },
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["status"] == "parse_failed"
+    assert body["parse_status"] == "failed"
+    assert body["raw_text"] is None
+
+
+def test_upload_bibtex_extracts_references(db: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    records = seed_documents(db)
+    client = client_for(db)
+    bibtex = b"""@article{smith2024agents,
+  title = {Agent Workflows for Thesis Review},
+  author = {Smith, Ada and Khan, Omar},
+  year = {2024},
+  journal = {Journal of Research Automation},
+  doi = {10.1234/example},
+  url = {https://example.com/paper}
+}
+"""
+    monkeypatch.setattr(
+        "app.services.documents.get_settings",
+        lambda: SimpleNamespace(upload_storage_dir=str(tmp_path)),
+    )
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents",
+        data={"document_type": "reference_file"},
+        files={"file": ("refs.bib", bibtex, "text/plain")},
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["filename"] == "refs.bib"
+    assert body["status"] == "parsed"
+    assert body["parse_status"] == "parsed"
+    assert "smith2024agents" in body["raw_text"]
+
+    reference = db.scalar(select(Reference).where(Reference.document_id == UUID(body["id"])))
+    assert reference is not None
+    assert reference.project_id == records["project"].id
+    assert reference.citation_key == "smith2024agents"
+    assert reference.title == "Agent Workflows for Thesis Review"
+    assert reference.authors == ["Smith, Ada", "Khan, Omar"]
+    assert reference.year == 2024
+    assert reference.venue == "Journal of Research Automation"
+    assert reference.doi == "10.1234/example"
+    assert reference.url == "https://example.com/paper"
+    assert reference.raw_bibtex.startswith("@article{smith2024agents")
+
+
+def test_upload_malformed_bibtex_marks_parse_failed(
+    db: Session,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    records = seed_documents(db)
+    client = client_for(db)
+    monkeypatch.setattr(
+        "app.services.documents.get_settings",
+        lambda: SimpleNamespace(upload_storage_dir=str(tmp_path)),
+    )
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents",
+        data={"document_type": "reference_file"},
+        files={"file": ("broken.bib", b"this is not bibtex", "text/plain")},
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["status"] == "parse_failed"
+    assert body["parse_status"] == "failed"
+    assert body["raw_text"] is None
+    assert db.scalar(select(Reference).where(Reference.document_id == UUID(body["id"]))) is None
+
+
+def test_upload_csv_saves_summary_metadata(db: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    records = seed_documents(db)
+    client = client_for(db)
+    monkeypatch.setattr(
+        "app.services.documents.get_settings",
+        lambda: SimpleNamespace(upload_storage_dir=str(tmp_path)),
+    )
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents",
+        data={"document_type": "result_file"},
+        files={"file": ("results.csv", b"model,accuracy\nbaseline,0.82\nagent,0.91\n", "text/csv")},
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["filename"] == "results.csv"
+    assert body["status"] == "parsed"
+    assert body["parse_status"] == "parsed"
+    assert body["parse_metadata"] == {
+        "row_count": 2,
+        "column_names": ["model", "accuracy"],
+        "sample_rows": [
+            {"model": "baseline", "accuracy": 0.82},
+            {"model": "agent", "accuracy": 0.91},
+        ],
+    }
+
+    document = db.scalar(select(Document).where(Document.id == UUID(body["id"])))
+    assert document is not None
+    assert document.parse_metadata == body["parse_metadata"]
+
+
+def test_upload_empty_csv_marks_parse_failed(db: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    records = seed_documents(db)
+    client = client_for(db)
+    monkeypatch.setattr(
+        "app.services.documents.get_settings",
+        lambda: SimpleNamespace(upload_storage_dir=str(tmp_path)),
+    )
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents",
+        data={"document_type": "result_file"},
+        files={"file": ("empty.csv", b"", "text/csv")},
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["status"] == "parse_failed"
+    assert body["parse_status"] == "failed"
+    assert body["parse_metadata"] is None
 
 
 def test_upload_document_rejects_unsupported_type(db: Session) -> None:
@@ -323,3 +626,23 @@ def test_list_documents_hides_other_users_project(db: Session) -> None:
     response = client.get(f"/api/v1/projects/{records['project'].id}/documents")
 
     assert response.status_code == 404
+
+
+def build_pdf_bytes(text: str) -> bytes:
+    pdf = fitz.open()
+    page = pdf.new_page()
+    if text:
+        page.insert_text((72, 72), text)
+    return pdf.tobytes()
+
+
+def build_docx_bytes(paragraphs: list[str]) -> bytes:
+    from io import BytesIO
+
+    document = DocxDocument()
+    for paragraph in paragraphs:
+        document.add_paragraph(paragraph)
+
+    buffer = BytesIO()
+    document.save(buffer)
+    return buffer.getvalue()
