@@ -2071,6 +2071,8 @@ Add a demo mode to ThesisForge. Let logged-in users click â€œLoad demo projectâ€
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Create a polished README for the public GitHub repository.
 
