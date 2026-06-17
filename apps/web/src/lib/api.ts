@@ -92,6 +92,40 @@ export type AnalysisRunStatus = Pick<
   "id" | "project_id" | "status" | "current_agent" | "progress_percentage" | "summary" | "overall_score" | "started_at" | "completed_at"
 >;
 
+export type AgentMessage = {
+  id: string;
+  analysis_run_id: string;
+  project_id: string | null;
+  from_agent_id: string | null;
+  from_agent_name: string | null;
+  from_agent_slug: string | null;
+  to_agent_id: string | null;
+  to_agent_name: string | null;
+  to_agent_slug: string | null;
+  message_type: string;
+  task: string | null;
+  summary: string | null;
+  content: string;
+  status: string;
+  band_message_id: string | null;
+  created_at: string;
+};
+
+export type Report = {
+  id: string;
+  project_id: string;
+  analysis_run_id: string | null;
+  title: string;
+  status: string;
+  overall_score: number | null;
+  score_breakdown: Record<string, unknown> | null;
+  executive_summary: string | null;
+  content: string | null;
+  structured_report: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -184,6 +218,18 @@ export function startAnalysisRun(projectId: string, payload: StartAnalysisRunPay
 
 export function getAnalysisRunStatus(runId: string): Promise<AnalysisRunStatus> {
   return apiRequest<AnalysisRunStatus>(`/analysis-runs/${runId}/status`);
+}
+
+export function listAgentMessages(runId: string): Promise<AgentMessage[]> {
+  return apiRequest<AgentMessage[]>(`/analysis-runs/${runId}/agent-messages`);
+}
+
+export function listProjectReports(projectId: string): Promise<Report[]> {
+  return apiRequest<Report[]>(`/projects/${projectId}/reports`);
+}
+
+export function getReport(reportId: string): Promise<Report> {
+  return apiRequest<Report>(`/reports/${reportId}`);
 }
 
 async function getErrorMessage(response: Response): Promise<string> {

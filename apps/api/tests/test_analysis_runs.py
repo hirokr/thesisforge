@@ -10,7 +10,7 @@ from app.core.auth import AuthenticatedUser, get_current_user
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
-from app.models import AgentMessage, AnalysisRun, ThesisProject, UserProfile
+from app.models import Agent, AgentMessage, AnalysisRun, ThesisProject, UserProfile
 from app.workers.analysis_runs import run_analysis_workflow_job
 
 
@@ -124,6 +124,90 @@ def test_running_analysis_run_status_reports_progress_from_handoffs() -> None:
         assert response.json()["status"] == "running"
         assert response.json()["current_agent"] == "research-gap"
         assert response.json()["progress_percentage"] == 14
+    finally:
+        app.dependency_overrides.clear()
+        next(db_generator, None)
+
+
+def test_list_agent_messages_for_owned_analysis_run() -> None:
+    db_generator = make_db()
+    db = next(db_generator)
+    try:
+        client = client_for(db)
+        project = seed_project(db)
+        from_agent = Agent(
+            name="Literature Review Agent",
+            slug="literature-review",
+            description="Reviews literature.",
+            system_prompt="Review literature.",
+            default_model_provider="openai",
+            default_model_name="gpt-4o-mini",
+        )
+        to_agent = Agent(
+            name="Research Gap Agent",
+            slug="research-gap",
+            description="Reviews research gaps.",
+            system_prompt="Review research gaps.",
+            default_model_provider="openai",
+            default_model_name="gpt-4o-mini",
+        )
+        run = AnalysisRun(project_id=project.id, status="running")
+        db.add_all([from_agent, to_agent, run])
+        db.flush()
+        db.add(
+            AgentMessage(
+                analysis_run_id=run.id,
+                project_id=project.id,
+                from_agent_id=from_agent.id,
+                to_agent_id=to_agent.id,
+                role="assistant",
+                content="Literature handoff complete.",
+                message_type="handoff",
+                task="literature-review_to_research-gap",
+                summary="Literature review complete.",
+                status="sent",
+                band_message_id="band-123",
+            )
+        )
+        db.commit()
+        db.refresh(run)
+
+        response = client.get(f"/api/v1/analysis-runs/{run.id}/agent-messages")
+
+        assert response.status_code == 200
+        messages = response.json()
+        assert len(messages) == 1
+        assert messages[0]["from_agent_slug"] == "literature-review"
+        assert messages[0]["from_agent_name"] == "Literature Review Agent"
+        assert messages[0]["to_agent_slug"] == "research-gap"
+        assert messages[0]["message_type"] == "handoff"
+        assert messages[0]["summary"] == "Literature review complete."
+        assert messages[0]["status"] == "sent"
+        assert messages[0]["band_message_id"] == "band-123"
+    finally:
+        app.dependency_overrides.clear()
+        next(db_generator, None)
+
+
+def test_agent_message_route_hides_other_users_runs() -> None:
+    db_generator = make_db()
+    db = next(db_generator)
+    try:
+        owner = UserProfile(auth_user_id="auth-owner", email="owner@example.com")
+        other = UserProfile(auth_user_id="auth-other", email="other@example.com")
+        db.add_all([owner, other])
+        db.flush()
+        other_project = ThesisProject(owner_id=other.id, title="Other project")
+        db.add(other_project)
+        db.flush()
+        other_run = AnalysisRun(project_id=other_project.id, status="running")
+        db.add(other_run)
+        db.commit()
+        db.refresh(other_run)
+
+        client = client_for(db)
+
+        assert client.get(f"/api/v1/analysis-runs/{other_run.id}/agent-messages").status_code == 404
     finally:
         app.dependency_overrides.clear()
         next(db_generator, None)

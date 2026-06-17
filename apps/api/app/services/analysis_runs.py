@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.orm import Session
 
 from app.core.auth import AuthenticatedUser
@@ -76,6 +77,18 @@ def get_analysis_run(db: Session, current_user: AuthenticatedUser, analysis_run_
 
 def get_analysis_run_status(db: Session, current_user: AuthenticatedUser, analysis_run_id: UUID) -> AnalysisRun:
     return require_owned_analysis_run(db, current_user, analysis_run_id)
+
+
+def list_agent_messages(db: Session, current_user: AuthenticatedUser, analysis_run_id: UUID) -> list[AgentMessage]:
+    analysis_run = require_owned_analysis_run(db, current_user, analysis_run_id)
+    return list(
+        db.scalars(
+            select(AgentMessage)
+            .options(selectinload(AgentMessage.from_agent), selectinload(AgentMessage.to_agent))
+            .where(AgentMessage.analysis_run_id == analysis_run.id)
+            .order_by(AgentMessage.created_at.asc())
+        )
+    )
 
 
 def attach_run_progress(db: Session, analysis_run: AnalysisRun) -> AnalysisRun:

@@ -7,6 +7,8 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 
 import { AppShell } from "@/components/layout/app-shell";
+import { AgentCollaborationLog } from "@/components/review/agent-collaboration-log";
+import { AgentTimeline } from "@/components/review/agent-timeline";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -171,6 +173,14 @@ export default function AnalysisRunProgressPage() {
                 ) : null}
               </CardContent>
             </Card>
+
+            <AgentTimeline
+              runStatus={runStatus.status}
+              currentAgent={runStatus.current_agent}
+              progressPercentage={progress}
+            />
+
+            <AgentCollaborationLog runId={runId} isLive={!isTerminal} />
           </>
         ) : null}
       </div>
