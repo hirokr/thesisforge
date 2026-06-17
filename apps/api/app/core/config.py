@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     band_api_base_url: str = "https://app.band.ai/api/v1/agent"
     band_api_key: str = ""
     band_project_id: str = ""
+    redis_url: str = "redis://localhost:6379/0"
+    analysis_queue_name: str = "thesisforge-analysis"
+    analysis_job_timeout_seconds: int = 1800
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

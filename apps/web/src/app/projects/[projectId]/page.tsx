@@ -178,9 +178,11 @@ export default function ProjectOverviewPage() {
                     Upload documents
                   </Link>
                 </Button>
-                <Button>
-                  <Play className="size-4" />
-                  Run thesis review
+                <Button asChild>
+                  <Link href={`/projects/${project.id}/review`}>
+                    <Play className="size-4" />
+                    Run thesis review
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -287,9 +289,11 @@ export default function ProjectOverviewPage() {
                       Add thesis materials
                     </Link>
                   </Button>
-                  <Button variant="outline" className="justify-start">
-                    <Play className="size-4" />
-                    Run review
+                  <Button asChild variant="outline" className="justify-start">
+                    <Link href={`/projects/${project.id}/review`}>
+                      <Play className="size-4" />
+                      Run review
+                    </Link>
                   </Button>
                   <Button asChild variant="outline" className="justify-start" aria-disabled={project.latest_score === null}>
                     <Link href="/reports">

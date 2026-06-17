@@ -13,3 +13,5 @@ python-docx==1.2.0
 bibtexparser==1.4.4
 pandas==3.0.3
 openai==1.91.0
+redis==6.4.0
+rq==2.6.1

@@ -1236,6 +1236,8 @@ Implement local storage for ThesisForge agent messages. Whenever a Band message 
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Create the main thesis review workflow using LangGraph or a similar graph-style workflow structure.
 
@@ -1268,6 +1270,8 @@ Build the main ThesisForge thesis review workflow using LangGraph. It should run
 ## TF-041: Create Analysis Run API
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Build backend APIs to start and inspect analysis runs.
@@ -1303,6 +1307,8 @@ Build analysis run APIs for ThesisForge. Users should be able to start a review,
 
 **Priority:** Should-have
 
+**Status:** Done
+
 **Description:**
 Move analysis execution into a background worker so the API request does not block.
 
@@ -1328,6 +1334,8 @@ Add a background worker for ThesisForge analysis runs using Celery or RQ with Re
 ## TF-043: Build Run Review Page
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Create the frontend page where users start a thesis review.
@@ -1360,6 +1368,8 @@ Build the ThesisForge run review page. Show a readiness checklist, allow the use
 ## TF-044: Build Analysis Run Progress Page
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Create a page that shows the progress of a running thesis review.

@@ -69,6 +69,29 @@ export type TextDocumentResult = {
   chunk_count: number;
 };
 
+export type AnalysisRun = {
+  id: string;
+  project_id: string;
+  status: string;
+  summary: string | null;
+  overall_score: number | null;
+  current_agent: string | null;
+  progress_percentage: number;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StartAnalysisRunPayload = {
+  include_results_agent?: boolean;
+};
+
+export type AnalysisRunStatus = Pick<
+  AnalysisRun,
+  "id" | "project_id" | "status" | "current_agent" | "progress_percentage" | "summary" | "overall_score" | "started_at" | "completed_at"
+>;
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -150,6 +173,17 @@ export function uploadProjectDocument(projectId: string, documentType: string, f
     method: "POST",
     body: formData
   });
+}
+
+export function startAnalysisRun(projectId: string, payload: StartAnalysisRunPayload = {}): Promise<AnalysisRun> {
+  return apiRequest<AnalysisRun>(`/projects/${projectId}/analysis-runs`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function getAnalysisRunStatus(runId: string): Promise<AnalysisRunStatus> {
+  return apiRequest<AnalysisRunStatus>(`/analysis-runs/${runId}/status`);
 }
 
 async function getErrorMessage(response: Response): Promise<string> {

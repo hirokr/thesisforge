@@ -39,6 +39,17 @@ Health check:
 curl http://localhost:8000/health
 ```
 
+## Analysis Worker
+
+Analysis runs are queued with RQ and Redis.
+
+```bash
+redis-server
+cd apps/api
+source .venv/bin/activate
+rq worker thesisforge-analysis --url redis://localhost:6379/0
+```
+
 ## Environment
 
 Copy the examples before running services:
