@@ -1,12 +1,18 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, File, Form, Response, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.auth import AuthenticatedUser, get_current_user
 from app.db.session import get_db
 from app.schemas.document import DocumentRead, DocumentTextCreate, DocumentTextRead
-from app.services.documents import create_text_document, delete_document, get_document, list_project_documents
+from app.services.documents import (
+    create_text_document,
+    create_uploaded_document,
+    delete_document,
+    get_document,
+    list_project_documents,
+)
 
 router = APIRouter(tags=["documents"])
 
@@ -41,6 +47,17 @@ def create_text_document_route(
         word_count=word_count,
         chunk_count=chunk_count,
     )
+
+
+@router.post("/projects/{project_id}/documents", response_model=DocumentRead, status_code=status.HTTP_201_CREATED)
+def upload_document_route(
+    project_id: UUID,
+    document_type: str = Form(..., min_length=1, max_length=80),
+    file: UploadFile = File(...),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> DocumentRead:
+    return create_uploaded_document(db, current_user, project_id, document_type, file)
 
 
 @router.get("/documents/{document_id}", response_model=DocumentRead)

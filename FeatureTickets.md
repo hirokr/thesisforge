@@ -681,6 +681,8 @@ Build a FastAPI endpoint for adding pasted text as a ThesisForge document. Save 
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Create a service that splits thesis text into manageable chunks for agent analysis and future embedding.
 
@@ -704,6 +706,8 @@ Create a text chunking service in the FastAPI backend. It should split document 
 ## TF-023: Build File Upload Backend API
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Create backend endpoint for uploading files to a project.

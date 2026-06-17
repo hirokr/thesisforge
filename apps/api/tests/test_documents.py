@@ -1,4 +1,6 @@
 from collections.abc import Generator
+from pathlib import Path
+from types import SimpleNamespace
 from uuid import UUID
 
 import pytest
@@ -12,6 +14,7 @@ from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
 from app.models import Document, DocumentChunk, ThesisProject, UserProfile
+from app.services.chunking import chunk_text
 
 
 @pytest.fixture()
@@ -173,6 +176,23 @@ def test_create_text_document_splits_long_text_into_ordered_chunks(db: Session) 
     assert len(chunks[2].content.split()) == 20
 
 
+def test_chunk_text_preserves_section_heading_across_splits() -> None:
+    raw_text = "\n".join(["Methodology", " ".join(f"token{i}" for i in range(12))])
+
+    chunks = chunk_text(raw_text, max_words=8)
+
+    assert [chunk.chunk_index for chunk in chunks] == [0, 1]
+    assert chunks[0].content.startswith("Methodology")
+    assert chunks[1].content.startswith("Methodology")
+    assert len(chunks[0].content.split()) <= 8
+    assert len(chunks[1].content.split()) <= 8
+
+
+def test_chunk_text_handles_empty_text_safely() -> None:
+    assert chunk_text("") == []
+    assert chunk_text(" \n\n\t ") == []
+
+
 def test_create_text_document_validates_project_ownership(db: Session) -> None:
     records = seed_documents(db)
     client = client_for(db, "auth-other")
@@ -188,6 +208,87 @@ def test_create_text_document_validates_project_ownership(db: Session) -> None:
 
     assert response.status_code == 404
     assert db.scalar(select(Document).where(Document.filename == "Blocked")) is None
+
+
+def test_upload_document_stores_metadata_and_file(db: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    records = seed_documents(db)
+    client = client_for(db)
+    monkeypatch.setattr(
+        "app.services.documents.get_settings",
+        lambda: SimpleNamespace(upload_storage_dir=str(tmp_path)),
+    )
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents",
+        data={"document_type": "thesis_draft"},
+        files={"file": ("draft.txt", b"Chapter 1\nResearch text", "text/plain")},
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["project_id"] == str(records["project"].id)
+    assert body["filename"] == "draft.txt"
+    assert body["document_type"] == "thesis_draft"
+    assert body["content_type"] == "text/plain"
+    assert body["size_bytes"] == len(b"Chapter 1\nResearch text")
+    assert body["status"] == "uploaded"
+    assert body["parse_status"] == "pending"
+    assert body["raw_text"] is None
+
+    storage_path = Path(body["storage_path"])
+    assert storage_path.exists()
+    assert storage_path.read_bytes() == b"Chapter 1\nResearch text"
+
+    document = db.scalar(select(Document).where(Document.id == UUID(body["id"])))
+    assert document is not None
+    assert document.storage_path == body["storage_path"]
+
+
+def test_upload_document_rejects_unsupported_type(db: Session) -> None:
+    records = seed_documents(db)
+    client = client_for(db)
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents",
+        data={"document_type": "thesis_draft"},
+        files={"file": ("draft.exe", b"not allowed", "application/octet-stream")},
+    )
+
+    assert response.status_code == 400
+    assert db.scalar(select(Document).where(Document.filename == "draft.exe")) is None
+
+
+def test_upload_document_rejects_large_file(db: Session) -> None:
+    records = seed_documents(db)
+    client = client_for(db)
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents",
+        data={"document_type": "thesis_draft"},
+        files={"file": ("large.txt", b"x" * (25 * 1024 * 1024 + 1), "text/plain")},
+    )
+
+    assert response.status_code == 413
+    assert db.scalar(select(Document).where(Document.filename == "large.txt")) is None
+
+
+def test_upload_document_validates_project_ownership(db: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    records = seed_documents(db)
+    client = client_for(db, "auth-other")
+    monkeypatch.setattr(
+        "app.services.documents.get_settings",
+        lambda: SimpleNamespace(upload_storage_dir=str(tmp_path)),
+    )
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents",
+        data={"document_type": "thesis_draft"},
+        files={"file": ("blocked.txt", b"This should not be stored.", "text/plain")},
+    )
+
+    assert response.status_code == 404
+    assert db.scalar(select(Document).where(Document.filename == "blocked.txt")) is None
+    assert not any(tmp_path.iterdir())
 
 
 def test_get_document_hides_other_users_document(db: Session) -> None:

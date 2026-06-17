@@ -1,14 +1,27 @@
+import re
+from pathlib import Path
 from uuid import UUID
 
+from fastapi import HTTPException, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.auth import AuthenticatedUser
-from app.models import Document, DocumentChunk
+from app.core.config import get_settings
+from app.models import Document
 from app.schemas.document import DocumentTextCreate
+from app.services.chunking import count_words, replace_document_chunks
 from app.services.ownership import require_owned_document, require_owned_project
 
-MAX_CHUNK_WORDS = 350
+MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+SUPPORTED_UPLOAD_EXTENSIONS = {".pdf", ".docx", ".txt", ".bib", ".csv"}
+UPLOAD_CONTENT_TYPES = {
+    ".bib": "text/plain",
+    ".csv": "text/csv",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".pdf": "application/pdf",
+    ".txt": "text/plain",
+}
 
 
 def list_project_documents(db: Session, current_user: AuthenticatedUser, project_id: UUID) -> list[Document]:
@@ -34,7 +47,6 @@ def create_text_document(
 ) -> tuple[Document, int, int]:
     project = require_owned_project(db, current_user, project_id)
     word_count = count_words(payload.raw_text)
-    chunks = split_text_into_chunks(payload.raw_text)
     document = Document(
         project_id=project.id,
         filename=payload.title,
@@ -48,12 +60,56 @@ def create_text_document(
     db.add(document)
     db.flush()
 
-    for chunk_index, chunk_content in enumerate(chunks):
-        db.add(DocumentChunk(document_id=document.id, chunk_index=chunk_index, content=chunk_content))
+    chunks = replace_document_chunks(db, document.id, payload.raw_text)
 
     db.commit()
     db.refresh(document)
     return document, word_count, len(chunks)
+
+
+def create_uploaded_document(
+    db: Session,
+    current_user: AuthenticatedUser,
+    project_id: UUID,
+    document_type: str,
+    upload: UploadFile,
+) -> Document:
+    project = require_owned_project(db, current_user, project_id)
+    original_filename = Path(upload.filename or "").name
+    extension = Path(original_filename).suffix.lower()
+    if not original_filename or extension not in SUPPORTED_UPLOAD_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unsupported file type. Upload PDF, DOCX, TXT, BIB, or CSV files only.",
+        )
+
+    contents = upload.file.read(MAX_UPLOAD_BYTES + 1)
+    if len(contents) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Files must be 25 MB or smaller.")
+
+    document = Document(
+        project_id=project.id,
+        filename=original_filename,
+        content_type=upload.content_type or UPLOAD_CONTENT_TYPES[extension],
+        document_type=document_type,
+        size_bytes=len(contents),
+        status="uploaded",
+        parse_status="pending",
+    )
+    db.add(document)
+    db.flush()
+
+    storage_root = Path(get_settings().upload_storage_dir)
+    project_dir = storage_root / str(project.id)
+    project_dir.mkdir(parents=True, exist_ok=True)
+    stored_filename = f"{document.id}-{_safe_filename(original_filename)}"
+    storage_path = project_dir / stored_filename
+    storage_path.write_bytes(contents)
+
+    document.storage_path = str(storage_path)
+    db.commit()
+    db.refresh(document)
+    return document
 
 
 def delete_document(db: Session, current_user: AuthenticatedUser, document_id: UUID) -> None:
@@ -62,35 +118,6 @@ def delete_document(db: Session, current_user: AuthenticatedUser, document_id: U
     db.commit()
 
 
-def count_words(text: str) -> int:
-    return len(text.split())
-
-
-def split_text_into_chunks(text: str, max_words: int = MAX_CHUNK_WORDS) -> list[str]:
-    paragraphs = [paragraph.strip() for paragraph in text.splitlines() if paragraph.strip()]
-    chunks: list[str] = []
-    current_words: list[str] = []
-
-    for paragraph in paragraphs:
-        paragraph_words = paragraph.split()
-        if len(paragraph_words) > max_words:
-            if current_words:
-                chunks.append(" ".join(current_words))
-                current_words = []
-            chunks.extend(_split_words(paragraph_words, max_words))
-            continue
-
-        if current_words and len(current_words) + len(paragraph_words) > max_words:
-            chunks.append(" ".join(current_words))
-            current_words = []
-
-        current_words.extend(paragraph_words)
-
-    if current_words:
-        chunks.append(" ".join(current_words))
-
-    return chunks
-
-
-def _split_words(words: list[str], max_words: int) -> list[str]:
-    return [" ".join(words[index : index + max_words]) for index in range(0, len(words), max_words)]
+def _safe_filename(filename: str) -> str:
+    safe = re.sub(r"[^A-Za-z0-9._-]+", "-", Path(filename).name).strip(".-")
+    return safe or "upload"
