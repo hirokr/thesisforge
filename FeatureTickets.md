@@ -922,6 +922,8 @@ Create a provider-agnostic LLM service in the FastAPI backend. Implement OpenAI 
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Create a base class that all ThesisForge agents inherit from.
 
@@ -952,6 +954,8 @@ Create a `BaseAgent` class for ThesisForge. It should define common behavior for
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Implement the Literature Review Agent, which reviews references and thesis content to extract themes and citation support.
 
@@ -979,6 +983,8 @@ Implement the Literature Review Agent for ThesisForge. It should analyze project
 ## TF-032: Build Research Gap Agent
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Implement the Research Gap Agent, which checks whether the research gap is clear, specific, supported, and aligned with the problem statement.
