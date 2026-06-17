@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { AlertCircle, ArrowLeft, ClipboardCopy, Play, RefreshCw } from "lucide-react";
+import { AlertCircle, ArrowLeft, CheckCircle2, ClipboardCopy, Download, Play, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
@@ -12,30 +12,38 @@ import { PriorityFixList } from "@/components/report/priority-fix-list";
 import { OverallScoreCard, ScoreBreakdownCards } from "@/components/report/score-cards";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getReport, type Report } from "@/lib/api";
+import { getProject, getReport, type Report } from "@/lib/api";
 import { cn } from "@/lib/utils";
+
+type ToastState = {
+  message: string;
+  variant: "success" | "danger";
+};
 
 export default function FinalReportPage() {
   const params = useParams<{ projectId: string; reportId: string }>();
   const projectId = params.projectId;
   const reportId = params.reportId;
   const [report, setReport] = useState<Report | null>(null);
+  const [projectTitle, setProjectTitle] = useState("thesis-project");
   const [isLoading, setIsLoading] = useState(true);
   const [isCopying, setIsCopying] = useState(false);
-  const [copyState, setCopyState] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function loadReport() {
     setIsLoading(true);
     setError(null);
-    setCopyState(null);
+    setToast(null);
 
     try {
-      const response = await getReport(reportId);
-      if (response.project_id !== projectId) {
+      const [reportResponse, projectResponse] = await Promise.all([getReport(reportId), getProject(projectId)]);
+      if (reportResponse.project_id !== projectId) {
         throw new Error("This report does not belong to the selected project.");
       }
-      setReport(response);
+      setReport(reportResponse);
+      setProjectTitle(projectResponse.title);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load report.");
     } finally {
@@ -53,15 +61,43 @@ export default function FinalReportPage() {
     }
 
     setIsCopying(true);
-    setCopyState(null);
     try {
-      await navigator.clipboard.writeText(report.content || report.executive_summary || report.title);
-      setCopyState("Report copied.");
+      await navigator.clipboard.writeText(getReportMarkdown(report));
+      showToast("Report copied to clipboard.", "success");
     } catch {
-      setCopyState("Copy failed.");
+      showToast("Copy failed.", "danger");
     } finally {
       setIsCopying(false);
     }
+  }
+
+  function downloadMarkdown() {
+    if (!report) {
+      return;
+    }
+
+    setIsDownloading(true);
+    try {
+      const blob = new Blob([getReportMarkdown(report)], { type: "text/markdown;charset=utf-8" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${slugify(projectTitle)}-${formatDateForFilename(report.created_at)}.md`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showToast("Markdown report downloaded.", "success");
+    } catch {
+      showToast("Download failed.", "danger");
+    } finally {
+      setIsDownloading(false);
+    }
+  }
+
+  function showToast(message: string, variant: ToastState["variant"]) {
+    setToast({ message, variant });
+    window.setTimeout(() => setToast(null), 3200);
   }
 
   return (
@@ -91,14 +127,14 @@ export default function FinalReportPage() {
               <ClipboardCopy className="size-4" />
               Copy report
             </Button>
+            <Button variant="outline" onClick={downloadMarkdown} disabled={!report || isDownloading}>
+              <Download className="size-4" />
+              Download markdown
+            </Button>
           </div>
         </div>
 
-        {copyState ? (
-          <div className={cn("rounded-md border p-3 text-sm", copyState.includes("failed") ? "border-danger/30 bg-danger/5 text-danger" : "border-success/30 bg-success/5 text-success")}>
-            {copyState}
-          </div>
-        ) : null}
+        {toast ? <ToastMessage toast={toast} /> : null}
 
         {isLoading ? (
           <ReportState icon={<RefreshCw className="size-5 animate-spin" />} title="Loading report" description="Fetching the final thesis health report." />
@@ -156,6 +192,21 @@ export default function FinalReportPage() {
   );
 }
 
+function ToastMessage({ toast }: { toast: ToastState }) {
+  return (
+    <div
+      role="status"
+      className={cn(
+        "fixed right-4 top-4 z-50 flex max-w-sm items-center gap-3 rounded-md border bg-card p-4 text-sm shadow-lg",
+        toast.variant === "danger" ? "border-danger/30 text-danger" : "border-success/30 text-success"
+      )}
+    >
+      {toast.variant === "success" ? <CheckCircle2 className="size-5 shrink-0" /> : <AlertCircle className="size-5 shrink-0" />}
+      <span>{toast.message}</span>
+    </div>
+  );
+}
+
 function ReportState({
   icon,
   title,
@@ -179,4 +230,30 @@ function ReportState({
       </CardContent>
     </Card>
   );
+}
+
+function getReportMarkdown(report: Report): string {
+  if (report.content?.trim()) {
+    return report.content;
+  }
+
+  const summary = report.executive_summary?.trim() || "No executive summary was included.";
+  const score = report.overall_score === null ? "Unscored" : String(Math.round(report.overall_score));
+  return `# ${report.title}\n\nOverall score: ${score}\n\n## Executive Summary\n\n${summary}\n`;
+}
+
+function slugify(value: string): string {
+  const slug = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || "thesis-project";
+}
+
+function formatDateForFilename(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "report";
+  }
+  return date.toISOString().slice(0, 10);
 }

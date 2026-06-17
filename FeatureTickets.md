@@ -1615,6 +1615,8 @@ Build a Defense Questions component for ThesisForge. Display generated thesis pa
 
 **Priority:** Should-have
 
+**Status:** Done
+
 **Description:**
 Allow users to copy the report text and download it as a markdown file.
 
