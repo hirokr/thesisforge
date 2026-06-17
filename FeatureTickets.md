@@ -365,6 +365,8 @@ Create a seed script for ThesisForge that inserts the default agent records into
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Before full database RLS is configured, backend services must enforce ownership checks for all project-related operations.
 
@@ -388,6 +390,8 @@ Add ownership checks to all ThesisForge backend services. Ensure users can only 
 ## TF-013: Add Supabase/Postgres RLS Policies
 
 **Priority:** Should-have
+
+**Status:** Done
 
 **Description:**
 Add database Row-Level Security policies for user-owned data tables.
@@ -414,6 +418,8 @@ Create SQL Row-Level Security policies for the ThesisForge Supabase/Postgres dat
 ## TF-014: Create User Profile API
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Create backend logic to create and fetch the current user profile.
@@ -445,6 +451,8 @@ Build the `/api/v1/me` endpoint in FastAPI. It should return the current user pr
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Build backend APIs for creating, listing, viewing, updating, and deleting thesis projects.
 
@@ -475,6 +483,8 @@ Build the ThesisForge project CRUD API in FastAPI. Add endpoints to create, list
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Build backend APIs for creating, listing, viewing, and deleting document records.
 
@@ -503,6 +513,8 @@ Build document metadata APIs for ThesisForge in FastAPI. Users should be able to
 ## TF-017: Build Dashboard Page
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Create the dashboard page that shows a user’s thesis projects and recent activity.
@@ -534,6 +546,8 @@ Build the ThesisForge dashboard page. Fetch the authenticated user’s projects 
 ## TF-018: Build Create Project Page
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Create the page where users can enter basic thesis project information.
@@ -568,6 +582,8 @@ Build the Create Project page for ThesisForge. Add a validated form for thesis m
 ## TF-019: Build Project Overview Page
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Create a project detail page that summarizes thesis metadata, uploaded documents, latest run, latest report, and next actions.

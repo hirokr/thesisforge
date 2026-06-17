@@ -30,6 +30,12 @@ class ThesisProject(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(50), default="draft", nullable=False)
     latest_score: Mapped[float | None] = mapped_column(Float)
     abstract: Mapped[str | None] = mapped_column(Text)
+    problem_statement: Mapped[str | None] = mapped_column(Text)
+    research_gap: Mapped[str | None] = mapped_column(Text)
+    objectives: Mapped[str | None] = mapped_column(Text)
+    methodology_summary: Mapped[str | None] = mapped_column(Text)
+    dataset_summary: Mapped[str | None] = mapped_column(Text)
+    results_summary: Mapped[str | None] = mapped_column(Text)
 
     owner: Mapped["UserProfile"] = relationship(back_populates="projects")
     documents: Mapped[list["Document"]] = relationship(back_populates="project", cascade="all, delete-orphan")
