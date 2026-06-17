@@ -1701,6 +1701,8 @@ Build the Tasks UI for ThesisForge. Fetch tasks from the backend, group them by 
 
 **Priority:** Nice-to-have
 
+**Status:** Done
+
 **Description:**
 Build backend APIs for adding and viewing supervisor feedback.
 
@@ -1729,6 +1731,8 @@ Build supervisor feedback APIs for ThesisForge. Allow users to add and list feed
 ## TF-056: Build Supervisor Feedback UI
 
 **Priority:** Nice-to-have
+
+**Status:** Done
 
 **Description:**
 Create frontend UI where users can paste supervisor feedback.
@@ -1759,6 +1763,8 @@ Build the Supervisor Feedback UI for ThesisForge. Let users paste feedback, choo
 ## TF-057: Add Global Backend Error Handler
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Create consistent backend error responses across the API.

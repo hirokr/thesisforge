@@ -6,12 +6,14 @@ from fastapi.testclient import TestClient
 
 from app.core.auth import AuthenticatedUser, get_current_user
 from app.core.config import Settings, get_settings
+from app.core.errors import install_error_handlers
 
 TEST_SECRET = "test-supabase-jwt-secret"
 
 
 def create_test_app() -> FastAPI:
     app = FastAPI()
+    install_error_handlers(app)
     app.dependency_overrides[get_settings] = lambda: Settings(supabase_jwt_secret=TEST_SECRET)
 
     @app.get("/protected")
@@ -40,7 +42,11 @@ def test_protected_route_rejects_missing_token() -> None:
     response = client.get("/protected")
 
     assert response.status_code == 401
-    assert response.json()["detail"] == "Invalid or missing authentication token."
+    body = response.json()
+    assert body["error"] is True
+    assert body["code"] == "unauthorized"
+    assert body["message"] == "Invalid or missing authentication token."
+    assert body["request_id"]
 
 
 def test_protected_route_rejects_invalid_token() -> None:
@@ -49,7 +55,7 @@ def test_protected_route_rejects_invalid_token() -> None:
     response = client.get("/protected", headers={"Authorization": "Bearer invalid-token"})
 
     assert response.status_code == 401
-    assert response.json()["detail"] == "Invalid or missing authentication token."
+    assert response.json()["message"] == "Invalid or missing authentication token."
 
 
 def test_protected_route_exposes_verified_user() -> None:

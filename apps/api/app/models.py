@@ -229,8 +229,9 @@ class SupervisorFeedback(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "supervisor_feedback"
 
     project_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), ForeignKey("thesis_projects.id", ondelete="CASCADE"), index=True, nullable=False)
-    author_name: Mapped[str | None] = mapped_column(String(255))
-    content: Mapped[str] = mapped_column(Text, nullable=False)
+    feedback_text: Mapped[str] = mapped_column(Text, nullable=False)
+    source: Mapped[str] = mapped_column(String(80), default="manual", nullable=False)
+    feedback_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     status: Mapped[str] = mapped_column(String(50), default="new", nullable=False)
 
     project: Mapped["ThesisProject"] = relationship(back_populates="supervisor_feedback")

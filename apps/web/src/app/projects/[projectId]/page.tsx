@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { AlertCircle, ArrowLeft, CheckCircle2, FileUp, Pencil, Play, RefreshCw, Save, ScrollText, X } from "lucide-react";
-import type { ReactNode } from "react";
+import { AlertCircle, ArrowLeft, CheckCircle2, FileUp, MessageSquareText, Pencil, Play, RefreshCw, Save, ScrollText, Send, X } from "lucide-react";
+import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -11,19 +11,23 @@ import { ActionTaskList } from "@/components/tasks/action-task-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
   type ActionTask,
   type ActionTaskStatus,
+  createProjectFeedback,
+  type FeedbackSource,
   getProject,
+  listProjectFeedback,
   listProjectTasks,
   listProjectDocuments,
   updateProject,
   updateTaskStatus,
   type Document,
   type Project,
+  type SupervisorFeedback,
   type UpdateProjectPayload
 } from "@/lib/api";
 
@@ -53,21 +57,34 @@ const editableFields: Array<{
   { name: "results_summary", label: "Results summary", multiline: true }
 ];
 
+const feedbackSources: Array<{ value: FeedbackSource; label: string }> = [
+  { value: "meeting", label: "Meeting" },
+  { value: "email", label: "Email" },
+  { value: "document_comment", label: "Document comment" },
+  { value: "manual", label: "Manual" }
+];
+
 export default function ProjectOverviewPage() {
   const params = useParams<{ projectId: string }>();
   const projectId = params.projectId;
   const [project, setProject] = useState<Project | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [tasks, setTasks] = useState<ActionTask[]>([]);
+  const [feedback, setFeedback] = useState<SupervisorFeedback[]>([]);
   const [editForm, setEditForm] = useState<ProjectEditForm>(() => emptyProjectEditForm());
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackSource, setFeedbackSource] = useState<FeedbackSource>("manual");
+  const [feedbackDate, setFeedbackDate] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingFeedback, setIsSavingFeedback] = useState(false);
   const [isUpdatingTask, setIsUpdatingTask] = useState(false);
   const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [taskError, setTaskError] = useState<string | null>(null);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   async function loadProject() {
@@ -77,15 +94,17 @@ export default function ProjectOverviewPage() {
     setTaskError(null);
 
     try {
-      const [projectResponse, documentsResponse, tasksResponse] = await Promise.all([
+      const [projectResponse, documentsResponse, tasksResponse, feedbackResponse] = await Promise.all([
         getProject(projectId),
         listProjectDocuments(projectId),
-        listProjectTasks(projectId)
+        listProjectTasks(projectId),
+        listProjectFeedback(projectId)
       ]);
       setProject(projectResponse);
       setEditForm(projectToEditForm(projectResponse));
       setDocuments(documentsResponse);
       setTasks(tasksResponse);
+      setFeedback(feedbackResponse);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load project.");
     } finally {
@@ -151,6 +170,33 @@ export default function ProjectOverviewPage() {
     } finally {
       setIsUpdatingTask(false);
       setUpdatingTaskId(null);
+    }
+  }
+
+  async function submitSupervisorFeedback(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFeedbackError(null);
+
+    if (!feedbackText.trim()) {
+      setFeedbackError("Enter supervisor feedback before saving.");
+      return;
+    }
+
+    setIsSavingFeedback(true);
+    try {
+      const createdFeedback = await createProjectFeedback(projectId, {
+        feedback_text: feedbackText.trim(),
+        source: feedbackSource,
+        feedback_date: feedbackDate ? `${feedbackDate}T00:00:00Z` : null
+      });
+      setFeedback((currentFeedback) => [createdFeedback, ...currentFeedback]);
+      setFeedbackText("");
+      setFeedbackSource("manual");
+      setFeedbackDate("");
+    } catch (err) {
+      setFeedbackError(err instanceof Error ? err.message : "Could not save supervisor feedback.");
+    } finally {
+      setIsSavingFeedback(false);
     }
   }
 
@@ -305,32 +351,97 @@ export default function ProjectOverviewPage() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Next actions</CardTitle>
-                  <CardDescription>Continue the project workflow.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-3">
-                  <Button asChild variant="outline" className="justify-start">
-                    <Link href={`/projects/${project.id}/upload`}>
-                      <FileUp className="size-4" />
-                      Add thesis materials
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" className="justify-start">
-                    <Link href={`/projects/${project.id}/review`}>
-                      <Play className="size-4" />
-                      Run review
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" className="justify-start" aria-disabled={project.latest_score === null}>
-                    <Link href="/reports">
-                      <ScrollText className="size-4" />
-                      View latest report
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
+              <div className="grid gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Next actions</CardTitle>
+                    <CardDescription>Continue the project workflow.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid gap-3">
+                    <Button asChild variant="outline" className="justify-start">
+                      <Link href={`/projects/${project.id}/upload`}>
+                        <FileUp className="size-4" />
+                        Add thesis materials
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline" className="justify-start">
+                      <Link href={`/projects/${project.id}/review`}>
+                        <Play className="size-4" />
+                        Run review
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline" className="justify-start" aria-disabled={project.latest_score === null}>
+                      <Link href="/reports">
+                        <ScrollText className="size-4" />
+                        View latest report
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Supervisor feedback</CardTitle>
+                    <CardDescription>Notes from meetings, email, or document comments.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid gap-4">
+                    <form className="grid gap-4" onSubmit={submitSupervisorFeedback}>
+                      <Field>
+                        <FieldLabel htmlFor="feedbackText">Feedback</FieldLabel>
+                        <textarea
+                          id="feedbackText"
+                          value={feedbackText}
+                          onChange={(event) => setFeedbackText(event.target.value)}
+                          rows={5}
+                          className={cn(
+                            "w-full rounded-md border border-input bg-card px-3 py-2 text-sm shadow-sm transition-colors",
+                            "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          )}
+                        />
+                        <FieldError>{feedbackError}</FieldError>
+                      </Field>
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                        <Field>
+                          <FieldLabel htmlFor="feedbackSource">Source</FieldLabel>
+                          <select
+                            id="feedbackSource"
+                            value={feedbackSource}
+                            onChange={(event) => setFeedbackSource(event.target.value as FeedbackSource)}
+                            className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          >
+                            {feedbackSources.map((source) => (
+                              <option key={source.value} value={source.value}>
+                                {source.label}
+                              </option>
+                            ))}
+                          </select>
+                        </Field>
+                        <Field>
+                          <FieldLabel htmlFor="feedbackDate">Date</FieldLabel>
+                          <Input id="feedbackDate" type="date" value={feedbackDate} onChange={(event) => setFeedbackDate(event.target.value)} />
+                        </Field>
+                      </div>
+                      <Button type="submit" disabled={isSavingFeedback}>
+                        {isSavingFeedback ? <RefreshCw className="size-4 animate-spin" /> : <Send className="size-4" />}
+                        {isSavingFeedback ? "Saving" : "Save feedback"}
+                      </Button>
+                    </form>
+
+                    {feedback.length === 0 ? (
+                      <div className="rounded-md border border-dashed border-border bg-background px-4 py-6 text-center">
+                        <MessageSquareText className="mx-auto size-6 text-muted-foreground" />
+                        <p className="mt-3 text-sm font-medium text-foreground">No feedback yet</p>
+                      </div>
+                    ) : (
+                      <div className="grid gap-3">
+                        {feedback.map((item) => (
+                          <FeedbackRow key={item.id} feedback={item} />
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </div>
 
             <ActionTaskList
@@ -395,6 +506,18 @@ function MetadataBlock({ label, value }: { label: string; value: string | null }
   );
 }
 
+function FeedbackRow({ feedback }: { feedback: SupervisorFeedback }) {
+  return (
+    <article className="rounded-md border border-border bg-background p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="outline">{formatFeedbackSource(feedback.source)}</Badge>
+        {feedback.feedback_date ? <span className="text-xs text-muted-foreground">{formatDate(feedback.feedback_date)}</span> : null}
+      </div>
+      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{feedback.feedback_text}</p>
+    </article>
+  );
+}
+
 function emptyProjectEditForm(): ProjectEditForm {
   return {
     research_area: "",
@@ -425,4 +548,12 @@ function editFormToPayload(form: ProjectEditForm): UpdateProjectPayload {
   return Object.fromEntries(
     Object.entries(form).map(([key, value]) => [key, value.trim() === "" ? null : value.trim()])
   ) as UpdateProjectPayload;
+}
+
+function formatFeedbackSource(source: string): string {
+  return feedbackSources.find((item) => item.value === source)?.label ?? source.replaceAll("_", " ");
+}
+
+function formatDate(value: string): string {
+  return new Date(value).toLocaleDateString();
 }

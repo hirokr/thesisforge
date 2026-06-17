@@ -3,10 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
+from app.core.errors import install_error_handlers
 
 settings = get_settings()
 
 app = FastAPI(title="ThesisForge API", version="0.1.0")
+install_error_handlers(app)
 
 app.add_middleware(
     CORSMiddleware,

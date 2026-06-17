@@ -143,6 +143,25 @@ export type ActionTask = {
   updated_at: string;
 };
 
+export type FeedbackSource = "meeting" | "email" | "document_comment" | "manual";
+
+export type SupervisorFeedback = {
+  id: string;
+  project_id: string;
+  feedback_text: string;
+  source: string;
+  feedback_date: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CreateSupervisorFeedbackPayload = {
+  feedback_text: string;
+  source?: FeedbackSource;
+  feedback_date?: string | null;
+};
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -260,6 +279,17 @@ export function updateTaskStatus(taskId: string, status: ActionTaskStatus): Prom
   });
 }
 
+export function listProjectFeedback(projectId: string): Promise<SupervisorFeedback[]> {
+  return apiRequest<SupervisorFeedback[]>(`/projects/${projectId}/feedback`);
+}
+
+export function createProjectFeedback(projectId: string, payload: CreateSupervisorFeedbackPayload): Promise<SupervisorFeedback> {
+  return apiRequest<SupervisorFeedback>(`/projects/${projectId}/feedback`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
 export function deleteTask(taskId: string): Promise<void> {
   return apiRequest<void>(`/tasks/${taskId}`, {
     method: "DELETE"
@@ -268,7 +298,10 @@ export function deleteTask(taskId: string): Promise<void> {
 
 async function getErrorMessage(response: Response): Promise<string> {
   try {
-    const body = (await response.json()) as { detail?: unknown };
+    const body = (await response.json()) as { detail?: unknown; message?: unknown };
+    if (typeof body.message === "string") {
+      return body.message;
+    }
     if (typeof body.detail === "string") {
       return body.detail;
     }
