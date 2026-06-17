@@ -1103,6 +1103,8 @@ Implement the Results Interpretation Agent for ThesisForge. It should review res
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Implement the Defense Preparation Agent, which generates likely thesis panel questions based on weaknesses found by other agents.
 
@@ -1129,6 +1131,8 @@ Implement the Defense Preparation Agent for ThesisForge. It should use previous 
 ## TF-037: Build Report Generator Agent
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Implement the Report Generator Agent, which combines all agent outputs into a final thesis health report.

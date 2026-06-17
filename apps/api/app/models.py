@@ -182,24 +182,33 @@ class Report(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     analysis_run_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), ForeignKey("analysis_runs.id", ondelete="SET NULL"), index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[str] = mapped_column(String(50), default="draft", nullable=False)
+    overall_score: Mapped[float | None] = mapped_column(Float)
+    score_breakdown: Mapped[dict | None] = mapped_column(JSON)
+    executive_summary: Mapped[str | None] = mapped_column(Text)
     content: Mapped[str | None] = mapped_column(Text)
+    structured_report: Mapped[dict | None] = mapped_column(JSON)
     export_path: Mapped[str | None] = mapped_column(String(1024))
 
     project: Mapped["ThesisProject"] = relationship(back_populates="reports")
     analysis_run: Mapped["AnalysisRun"] = relationship(back_populates="reports")
+    action_tasks: Mapped[list["ActionTask"]] = relationship(back_populates="report")
 
 
 class ActionTask(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "action_tasks"
 
     project_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), ForeignKey("thesis_projects.id", ondelete="CASCADE"), index=True, nullable=False)
+    report_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), ForeignKey("reports.id", ondelete="SET NULL"), index=True)
     finding_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), ForeignKey("agent_findings.id", ondelete="SET NULL"), index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
+    category: Mapped[str | None] = mapped_column(String(100))
+    priority: Mapped[str] = mapped_column(String(50), default="medium", nullable=False)
     status: Mapped[str] = mapped_column(String(50), default="open", nullable=False)
     due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     project: Mapped["ThesisProject"] = relationship(back_populates="action_tasks")
+    report: Mapped["Report"] = relationship(back_populates="action_tasks")
     finding: Mapped["AgentFinding"] = relationship()
 
 
