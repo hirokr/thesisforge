@@ -258,6 +258,8 @@ Implement route protection in the Next.js frontend. Redirect unauthenticated use
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Add backend middleware/dependencies to verify Supabase JWT tokens on protected FastAPI routes.
 
@@ -282,6 +284,8 @@ Add Supabase JWT verification to the FastAPI backend. Create a reusable dependen
 ## TF-010: Create Database Schema and Migrations
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Create the initial Postgres schema for ThesisForge using SQLAlchemy models and Alembic migrations.
@@ -320,6 +324,8 @@ Create the ThesisForge database models in FastAPI using SQLAlchemy and Alembic. 
 ## TF-011: Seed Default Agents
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Create a seed script that inserts the default ThesisForge agents into the database.
