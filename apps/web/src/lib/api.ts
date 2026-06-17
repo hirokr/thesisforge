@@ -126,6 +126,23 @@ export type Report = {
   updated_at: string;
 };
 
+export type ActionTaskStatus = "open" | "in_progress" | "completed" | "dismissed";
+
+export type ActionTask = {
+  id: string;
+  project_id: string;
+  report_id: string | null;
+  finding_id: string | null;
+  title: string;
+  description: string | null;
+  category: string | null;
+  priority: string;
+  status: ActionTaskStatus;
+  due_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -230,6 +247,23 @@ export function listProjectReports(projectId: string): Promise<Report[]> {
 
 export function getReport(reportId: string): Promise<Report> {
   return apiRequest<Report>(`/reports/${reportId}`);
+}
+
+export function listProjectTasks(projectId: string): Promise<ActionTask[]> {
+  return apiRequest<ActionTask[]>(`/projects/${projectId}/tasks`);
+}
+
+export function updateTaskStatus(taskId: string, status: ActionTaskStatus): Promise<ActionTask> {
+  return apiRequest<ActionTask>(`/tasks/${taskId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status })
+  });
+}
+
+export function deleteTask(taskId: string): Promise<void> {
+  return apiRequest<void>(`/tasks/${taskId}`, {
+    method: "DELETE"
+  });
 }
 
 async function getErrorMessage(response: Response): Promise<string> {

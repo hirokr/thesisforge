@@ -1641,6 +1641,8 @@ Add copy and markdown download actions to the ThesisForge report page. Let users
 
 **Priority:** Should-have
 
+**Status:** Done
+
 **Description:**
 Build backend APIs for viewing and updating generated action tasks.
 
@@ -1672,6 +1674,8 @@ Build action task APIs for ThesisForge. Allow users to list tasks for a project,
 ## TF-054: Build Tasks UI
 
 **Priority:** Should-have
+
+**Status:** Done
 
 **Description:**
 Create frontend UI to show and manage action tasks generated from reports.

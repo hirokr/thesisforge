@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 
 import { AppShell } from "@/components/layout/app-shell";
+import { ActionTaskList } from "@/components/tasks/action-task-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,9 +15,13 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
+  type ActionTask,
+  type ActionTaskStatus,
   getProject,
+  listProjectTasks,
   listProjectDocuments,
   updateProject,
+  updateTaskStatus,
   type Document,
   type Project,
   type UpdateProjectPayload
@@ -53,27 +58,34 @@ export default function ProjectOverviewPage() {
   const projectId = params.projectId;
   const [project, setProject] = useState<Project | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [tasks, setTasks] = useState<ActionTask[]>([]);
   const [editForm, setEditForm] = useState<ProjectEditForm>(() => emptyProjectEditForm());
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingTask, setIsUpdatingTask] = useState(false);
+  const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [taskError, setTaskError] = useState<string | null>(null);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   async function loadProject() {
     setIsLoading(true);
     setError(null);
     setSaveError(null);
+    setTaskError(null);
 
     try {
-      const [projectResponse, documentsResponse] = await Promise.all([
+      const [projectResponse, documentsResponse, tasksResponse] = await Promise.all([
         getProject(projectId),
-        listProjectDocuments(projectId)
+        listProjectDocuments(projectId),
+        listProjectTasks(projectId)
       ]);
       setProject(projectResponse);
       setEditForm(projectToEditForm(projectResponse));
       setDocuments(documentsResponse);
+      setTasks(tasksResponse);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load project.");
     } finally {
@@ -123,6 +135,22 @@ export default function ProjectOverviewPage() {
       setSaveError(err instanceof Error ? err.message : "Could not save project details.");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function updateActionTaskStatus(taskId: string, status: ActionTaskStatus) {
+    setIsUpdatingTask(true);
+    setUpdatingTaskId(taskId);
+    setTaskError(null);
+
+    try {
+      const updatedTask = await updateTaskStatus(taskId, status);
+      setTasks((currentTasks) => currentTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task)));
+    } catch (err) {
+      setTaskError(err instanceof Error ? err.message : "Could not update task.");
+    } finally {
+      setIsUpdatingTask(false);
+      setUpdatingTaskId(null);
     }
   }
 
@@ -304,6 +332,14 @@ export default function ProjectOverviewPage() {
                 </CardContent>
               </Card>
             </div>
+
+            <ActionTaskList
+              tasks={tasks}
+              isUpdating={isUpdatingTask}
+              updatingTaskId={updatingTaskId}
+              error={taskError}
+              onStatusChange={(taskId, status) => void updateActionTaskStatus(taskId, status)}
+            />
           </>
         )}
       </div>
