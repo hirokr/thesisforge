@@ -885,6 +885,8 @@ Build the ThesisForge upload page. Allow users to upload supported files or past
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Create a backend service that wraps LLM calls so agents do not directly depend on a specific provider.
 

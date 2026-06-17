@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     supabase_jwt_secret: str = ""
     supabase_jwt_audience: str = "authenticated"
     upload_storage_dir: str = "storage/uploads"
+    openai_api_key: str = ""
+    llm_default_provider: str = "openai"
+    llm_default_model: str = "gpt-4.1-mini"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
