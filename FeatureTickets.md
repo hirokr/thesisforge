@@ -203,6 +203,8 @@ Build a login page for ThesisForge at `/login` using Supabase Auth. Include emai
 
 **Priority:** Should-have
 
+**Status:** Done
+
 **Description:**
 Add “Continue with Google” login support using Supabase OAuth.
 
@@ -225,6 +227,8 @@ Add Google OAuth login to the ThesisForge login and signup pages using Supabase 
 ## TF-008: Implement Protected Routes
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Protect all authenticated app pages so only logged-in users can access them.
