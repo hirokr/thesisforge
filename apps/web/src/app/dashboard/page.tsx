@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { AlertCircle, FileText, FolderPlus, RefreshCw } from "lucide-react";
+import { AlertCircle, FileText, FlaskConical, FolderPlus, RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -9,11 +10,13 @@ import { AppShell } from "@/components/layout/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { listProjects, type Project } from "@/lib/api";
+import { listProjects, loadDemoProject, type Project } from "@/lib/api";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingDemo, setIsLoadingDemo] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function loadProjects() {
@@ -32,6 +35,20 @@ export default function DashboardPage() {
   useEffect(() => {
     void loadProjects();
   }, []);
+
+  async function handleLoadDemoProject() {
+    setIsLoadingDemo(true);
+    setError(null);
+
+    try {
+      const result = await loadDemoProject();
+      router.push(`/projects/${result.project.id}/review`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load the demo project.");
+    } finally {
+      setIsLoadingDemo(false);
+    }
+  }
 
   const stats = useMemo(
     () => [
@@ -58,12 +75,18 @@ export default function DashboardPage() {
             <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
             <p className="mt-2 text-sm text-muted-foreground">Track thesis projects, recent progress, and report readiness.</p>
           </div>
-          <Button asChild>
-            <Link href="/projects/new">
-              <FolderPlus className="size-4" />
-              Create project
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => void handleLoadDemoProject()} disabled={isLoadingDemo}>
+              {isLoadingDemo ? <RefreshCw className="size-4 animate-spin" /> : <FlaskConical className="size-4" />}
+              Load demo project
+            </Button>
+            <Button asChild>
+              <Link href="/projects/new">
+                <FolderPlus className="size-4" />
+                Create project
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
@@ -100,12 +123,18 @@ export default function DashboardPage() {
             title="No projects yet"
             description="Create your first thesis project to start reviewing drafts and research materials."
             action={
-              <Button asChild>
-                <Link href="/projects/new">
-                  <FolderPlus className="size-4" />
-                  Create project
-                </Link>
-              </Button>
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button variant="outline" onClick={() => void handleLoadDemoProject()} disabled={isLoadingDemo}>
+                  {isLoadingDemo ? <RefreshCw className="size-4 animate-spin" /> : <FlaskConical className="size-4" />}
+                  Load demo project
+                </Button>
+                <Button asChild>
+                  <Link href="/projects/new">
+                    <FolderPlus className="size-4" />
+                    Create project
+                  </Link>
+                </Button>
+              </div>
             }
           />
         ) : (

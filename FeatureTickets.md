@@ -1936,6 +1936,8 @@ Create centralized environment configuration for ThesisForge. Add backend config
 
 **Priority:** Should-have
 
+**Status:** Done
+
 **Description:**
 Create Docker Compose setup for local Postgres, Redis, and backend services.
 
@@ -1962,6 +1964,8 @@ Add Docker Compose local development setup for ThesisForge with Postgres/pgvecto
 
 **Priority:** Should-have
 
+**Status:** Done
+
 **Description:**
 Prepare frontend for Vercel deployment.
 
@@ -1983,6 +1987,8 @@ Prepare the ThesisForge Next.js frontend for Vercel deployment. Ensure the app b
 ## TF-065: Add Render or Railway Deployment Config for Backend
 
 **Priority:** Should-have
+
+**Status:** Done
 
 **Description:**
 Prepare backend for deployment on Render or Railway.
@@ -2008,6 +2014,8 @@ Prepare the ThesisForge FastAPI backend for deployment on Render or Railway. Add
 ## TF-066: Add Demo Thesis Dataset
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Create a sample thesis project dataset that can be used for demos and hackathon judging.
@@ -2037,6 +2045,8 @@ Create a safe demo dataset for ThesisForge inside an `examples/` folder. Include
 ## TF-067: Create Demo Mode
 
 **Priority:** Should-have
+
+**Status:** Done
 
 **Description:**
 Add a demo mode that fills the app with sample thesis data so judges can quickly test the workflow.

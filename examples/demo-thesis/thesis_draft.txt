@@ -1,0 +1,31 @@
+Title: Interpretable Energy Demand Forecasting for Mid-Sized University Buildings
+
+Abstract
+This thesis explores interpretable short-term electricity demand forecasting for university buildings. The goal is to help facilities teams anticipate peak loads while understanding why a model expects demand to rise or fall. The work uses a synthetic campus dataset that combines hourly electricity demand with weather, calendar, occupancy proxy, and building metadata.
+
+Problem Statement
+University facilities teams often need hourly load forecasts to schedule HVAC equipment, plan demand response, and reduce avoidable peak charges. Forecasting models can be accurate, but opaque predictions are difficult to trust when conditions change during heat waves, holidays, or exam periods. The practical problem is not only to predict energy demand, but to provide explanations that align with operational decisions.
+
+Research Gap
+Existing building energy forecasting research commonly emphasizes aggregate accuracy metrics. Less attention is given to whether explanations are stable across building types or useful for staff who operate campus infrastructure. This project addresses that gap by comparing forecast accuracy and explanation consistency for multiple model families on the same synthetic campus scenario.
+
+Research Objectives
+1. Build a reproducible benchmark for hourly demand forecasting across lecture, lab, library, and residential buildings.
+2. Compare gradient boosting, LSTM, and temporal fusion transformer models using MAE, RMSE, MAPE, and peak-hour error.
+3. Evaluate explanation consistency with SHAP feature rankings and attention summaries.
+4. Convert model findings into practical recommendations for facilities scheduling.
+
+Methodology
+The demo dataset contains 18 months of synthetic hourly readings for 12 buildings. Each row includes electricity demand, dry-bulb temperature, humidity, cooling degree hours, academic calendar flags, hour-of-day indicators, building type, and an occupancy proxy. The split is chronological: the first 12 months are used for training, the next 3 months for validation, and the final 3 months for testing. The baseline models are a persistence forecast and gradient boosting. The sequence models are an LSTM and a temporal fusion transformer. Hyperparameters are selected on validation MAE.
+
+Evaluation Plan
+The primary accuracy metric is mean absolute error in kWh. Secondary metrics include RMSE, MAPE, and absolute error during the top 10 percent of demand hours. Explanation quality is assessed by comparing top-ranked features across monthly windows and by checking whether explanations match known synthetic drivers such as temperature, occupancy proxy, hour of day, and exam-week indicators.
+
+Results Summary
+The temporal fusion transformer produced the strongest average performance with 6.8 kWh MAE. The LSTM reached 8.1 kWh MAE, and gradient boosting reached 8.7 kWh MAE. Peak-hour error improved most for lecture halls and libraries, where occupancy schedules created predictable demand spikes. SHAP summaries identified temperature, occupancy proxy, hour of day, and academic calendar flags as the most influential features. Explanation stability was weaker during holiday periods, which suggests that the model needs more robust calendar features before operational deployment.
+
+Limitations
+The dataset is synthetic, so the results should not be interpreted as measured campus performance. Occupancy is represented by a proxy feature rather than direct sensor counts. The thesis also needs a stronger comparison against recent probabilistic forecasting methods and more evidence that explanations are useful to actual facilities staff.
+
+References
+The accompanying BibTeX file includes public references on interpretable machine learning, recurrent neural networks, temporal fusion transformers, and measurement guidance for building energy analysis.

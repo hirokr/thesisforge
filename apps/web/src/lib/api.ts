@@ -33,6 +33,12 @@ export type CreateProjectPayload = {
   abstract?: string | null;
 };
 
+export type DemoProjectResult = {
+  project: Project;
+  document_count: number;
+  reference_count: number;
+};
+
 export type UpdateProjectPayload = Partial<CreateProjectPayload> & {
   status?: string | null;
 };
@@ -211,6 +217,12 @@ export function createProject(payload: CreateProjectPayload): Promise<Project> {
   return apiRequest<Project>("/projects", {
     method: "POST",
     body: JSON.stringify(payload)
+  });
+}
+
+export function loadDemoProject(): Promise<DemoProjectResult> {
+  return apiRequest<DemoProjectResult>("/demo/project", {
+    method: "POST"
   });
 }
 

@@ -1,0 +1,50 @@
+services:
+  - type: web
+    name: thesisforge-api
+    runtime: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: ./apps/api
+    plan: starter
+    healthCheckPath: /health
+    preDeployCommand: alembic upgrade head
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: API_V1_PREFIX
+        value: /api/v1
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: PORT
+        value: 8000
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: SUPABASE_JWT_AUDIENCE
+        value: authenticated
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: LLM_DEFAULT_PROVIDER
+        value: openai
+      - key: LLM_DEFAULT_MODEL
+        value: gpt-4.1-mini
+      - key: BAND_API_BASE_URL
+        value: https://app.band.ai/api/v1/agent
+      - key: BAND_API_KEY
+        sync: false
+      - key: BAND_PROJECT_ID
+        sync: false
+      - key: UPLOAD_STORAGE_DIR
+        value: storage/uploads
+      - key: ANALYSIS_QUEUE_NAME
+        value: thesisforge-analysis
+      - key: ANALYSIS_JOB_TIMEOUT_SECONDS
+        value: 1800
+      - key: RATE_LIMIT_WINDOW_SECONDS
+        value: 60
+      - key: RATE_LIMIT_FILE_UPLOADS_PER_WINDOW
+        value: 60
+      - key: RATE_LIMIT_ANALYSIS_RUNS_PER_WINDOW
+        value: 20

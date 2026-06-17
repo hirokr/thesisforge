@@ -1,0 +1,66 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: thesisforge-postgres
+    environment:
+      POSTGRES_DB: thesisforge
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d thesisforge"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: thesisforge-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./apps/api
+    container_name: thesisforge-api
+    environment:
+      APP_ENV: development
+      API_V1_PREFIX: /api/v1
+      FRONTEND_ORIGIN: http://localhost:3000
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/thesisforge
+      REDIS_URL: redis://redis:6379/0
+      ANALYSIS_QUEUE_NAME: thesisforge-analysis
+      ANALYSIS_JOB_TIMEOUT_SECONDS: 1800
+      RATE_LIMIT_WINDOW_SECONDS: 60
+      RATE_LIMIT_FILE_UPLOADS_PER_WINDOW: 60
+      RATE_LIMIT_ANALYSIS_RUNS_PER_WINDOW: 20
+      LLM_DEFAULT_PROVIDER: openai
+      LLM_DEFAULT_MODEL: gpt-4.1-mini
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      BAND_API_BASE_URL: ${BAND_API_BASE_URL:-https://app.band.ai/api/v1/agent}
+      BAND_API_KEY: ${BAND_API_KEY:-}
+      BAND_PROJECT_ID: ${BAND_PROJECT_ID:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/api/storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  redis-data:
