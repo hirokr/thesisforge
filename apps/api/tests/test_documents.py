@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
@@ -92,6 +93,101 @@ def test_list_project_documents_for_owner(db: Session) -> None:
     assert response.json()[0]["id"] == str(records["document"].id)
     assert response.json()[0]["filename"] == "draft.txt"
     assert response.json()[0]["status"] == "uploaded"
+    assert response.json()[0]["parse_status"] == "pending"
+
+
+def test_create_text_document_saves_parsed_document_and_chunks(db: Session) -> None:
+    records = seed_documents(db)
+    client = client_for(db)
+    raw_text = "\n\n".join(
+        [
+            "Introduction\nThis thesis studies multi-agent review workflows.",
+            "Methodology\nThe system chunks pasted thesis text before analysis.",
+        ]
+    )
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents/text",
+        json={
+            "document_type": "thesis_draft",
+            "title": "Methodology section",
+            "raw_text": raw_text,
+        },
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["project_id"] == str(records["project"].id)
+    assert body["document_type"] == "thesis_draft"
+    assert body["title"] == "Methodology section"
+    assert body["parse_status"] == "parsed"
+    assert body["word_count"] == len(raw_text.split())
+    assert body["chunk_count"] == 1
+
+    document = db.scalar(select(Document).where(Document.id == UUID(body["id"])))
+    chunks = list(
+        db.scalars(
+            select(DocumentChunk)
+            .where(DocumentChunk.document_id == UUID(body["id"]))
+            .order_by(DocumentChunk.chunk_index)
+        )
+    )
+    assert document is not None
+    assert document.filename == "Methodology section"
+    assert document.raw_text == raw_text
+    assert document.status == "parsed"
+    assert document.parse_status == "parsed"
+    assert document.content_type == "text/plain"
+    assert document.size_bytes == len(raw_text.encode("utf-8"))
+    assert [chunk.chunk_index for chunk in chunks] == [0]
+    assert chunks[0].content.startswith("Introduction")
+
+
+def test_create_text_document_splits_long_text_into_ordered_chunks(db: Session) -> None:
+    records = seed_documents(db)
+    client = client_for(db)
+    raw_text = " ".join(f"word{i}" for i in range(720))
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents/text",
+        json={
+            "document_type": "thesis_draft",
+            "title": "Long draft",
+            "raw_text": raw_text,
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["word_count"] == 720
+    assert response.json()["chunk_count"] == 3
+    chunks = list(
+        db.scalars(
+            select(DocumentChunk)
+            .where(DocumentChunk.document_id == UUID(response.json()["id"]))
+            .order_by(DocumentChunk.chunk_index)
+        )
+    )
+    assert [chunk.chunk_index for chunk in chunks] == [0, 1, 2]
+    assert len(chunks[0].content.split()) == 350
+    assert len(chunks[1].content.split()) == 350
+    assert len(chunks[2].content.split()) == 20
+
+
+def test_create_text_document_validates_project_ownership(db: Session) -> None:
+    records = seed_documents(db)
+    client = client_for(db, "auth-other")
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents/text",
+        json={
+            "document_type": "thesis_draft",
+            "title": "Blocked",
+            "raw_text": "This should not be stored.",
+        },
+    )
+
+    assert response.status_code == 404
+    assert db.scalar(select(Document).where(Document.filename == "Blocked")) is None
 
 
 def test_get_document_hides_other_users_document(db: Session) -> None:

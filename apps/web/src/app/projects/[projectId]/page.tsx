@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { AlertCircle, ArrowLeft, FileUp, Play, RefreshCw, ScrollText } from "lucide-react";
+import { AlertCircle, ArrowLeft, CheckCircle2, FileUp, Pencil, Play, RefreshCw, Save, ScrollText, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -10,19 +10,61 @@ import { AppShell } from "@/components/layout/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getProject, listProjectDocuments, type Document, type Project } from "@/lib/api";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import {
+  getProject,
+  listProjectDocuments,
+  updateProject,
+  type Document,
+  type Project,
+  type UpdateProjectPayload
+} from "@/lib/api";
+
+type ProjectEditForm = {
+  research_area: string;
+  thesis_stage: string;
+  problem_statement: string;
+  research_gap: string;
+  objectives: string;
+  methodology_summary: string;
+  dataset_summary: string;
+  results_summary: string;
+};
+
+const editableFields: Array<{
+  name: keyof ProjectEditForm;
+  label: string;
+  multiline?: boolean;
+}> = [
+  { name: "research_area", label: "Research area" },
+  { name: "thesis_stage", label: "Thesis stage" },
+  { name: "problem_statement", label: "Problem statement", multiline: true },
+  { name: "research_gap", label: "Research gap", multiline: true },
+  { name: "objectives", label: "Objectives", multiline: true },
+  { name: "methodology_summary", label: "Methodology summary", multiline: true },
+  { name: "dataset_summary", label: "Dataset summary", multiline: true },
+  { name: "results_summary", label: "Results summary", multiline: true }
+];
 
 export default function ProjectOverviewPage() {
   const params = useParams<{ projectId: string }>();
   const projectId = params.projectId;
   const [project, setProject] = useState<Project | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [editForm, setEditForm] = useState<ProjectEditForm>(() => emptyProjectEditForm());
+  const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   async function loadProject() {
     setIsLoading(true);
     setError(null);
+    setSaveError(null);
 
     try {
       const [projectResponse, documentsResponse] = await Promise.all([
@@ -30,6 +72,7 @@ export default function ProjectOverviewPage() {
         listProjectDocuments(projectId)
       ]);
       setProject(projectResponse);
+      setEditForm(projectToEditForm(projectResponse));
       setDocuments(documentsResponse);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load project.");
@@ -44,9 +87,58 @@ export default function ProjectOverviewPage() {
 
   const latestDocument = useMemo(() => documents[0] ?? null, [documents]);
 
+  function startEditing() {
+    if (!project) {
+      return;
+    }
+
+    setEditForm(projectToEditForm(project));
+    setSaveError(null);
+    setShowSuccessToast(false);
+    setIsEditing(true);
+  }
+
+  function cancelEditing() {
+    if (project) {
+      setEditForm(projectToEditForm(project));
+    }
+
+    setSaveError(null);
+    setIsEditing(false);
+  }
+
+  async function saveProjectDetails() {
+    setIsSaving(true);
+    setSaveError(null);
+    setShowSuccessToast(false);
+
+    try {
+      const updatedProject = await updateProject(projectId, editFormToPayload(editForm));
+      setProject(updatedProject);
+      setEditForm(projectToEditForm(updatedProject));
+      setIsEditing(false);
+      setShowSuccessToast(true);
+      window.setTimeout(() => setShowSuccessToast(false), 3500);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Could not save project details.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   return (
     <AppShell>
       <div className="flex flex-col gap-6">
+        {showSuccessToast ? (
+          <div className="fixed right-4 top-4 z-50 flex max-w-sm items-center gap-3 rounded-md border border-success/30 bg-card px-4 py-3 text-sm shadow-lg">
+            <CheckCircle2 className="size-5 shrink-0 text-success" />
+            <div>
+              <p className="font-medium text-foreground">Project details saved</p>
+              <p className="text-muted-foreground">The thesis metadata is up to date.</p>
+            </div>
+          </div>
+        ) : null}
+
         <Button asChild variant="ghost" className="w-fit -ml-3">
           <Link href="/dashboard">
             <ArrowLeft className="size-4" />
@@ -105,17 +197,81 @@ export default function ProjectOverviewPage() {
 
             <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
               <Card>
-                <CardHeader>
-                  <CardTitle>Thesis metadata</CardTitle>
-                  <CardDescription>Core context for the review agents.</CardDescription>
+                <CardHeader className="gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <CardTitle>Thesis metadata</CardTitle>
+                    <CardDescription>Core context for the review agents.</CardDescription>
+                  </div>
+                  {isEditing ? (
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={cancelEditing} disabled={isSaving}>
+                        <X className="size-4" />
+                        Cancel
+                      </Button>
+                      <Button onClick={() => void saveProjectDetails()} disabled={isSaving}>
+                        {isSaving ? <RefreshCw className="size-4 animate-spin" /> : <Save className="size-4" />}
+                        Save
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button variant="outline" onClick={startEditing}>
+                      <Pencil className="size-4" />
+                      Edit details
+                    </Button>
+                  )}
                 </CardHeader>
                 <CardContent className="grid gap-4">
-                  <MetadataBlock label="Problem statement" value={project.problem_statement} />
-                  <MetadataBlock label="Research gap" value={project.research_gap} />
-                  <MetadataBlock label="Objectives" value={project.objectives} />
-                  <MetadataBlock label="Methodology" value={project.methodology_summary} />
-                  <MetadataBlock label="Dataset" value={project.dataset_summary} />
-                  <MetadataBlock label="Results" value={project.results_summary} />
+                  {saveError ? (
+                    <div className="rounded-md border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+                      {saveError}
+                    </div>
+                  ) : null}
+
+                  {isEditing ? (
+                    <FieldGroup>
+                      {editableFields.map((field) => (
+                        <Field key={field.name}>
+                          <FieldLabel htmlFor={field.name}>{field.label}</FieldLabel>
+                          {field.multiline ? (
+                            <textarea
+                              id={field.name}
+                              value={editForm[field.name]}
+                              onChange={(event) =>
+                                setEditForm((current) => ({
+                                  ...current,
+                                  [field.name]: event.target.value
+                                }))
+                              }
+                              rows={field.name === "objectives" ? 5 : 4}
+                              className={cn(
+                                "min-h-24 w-full rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                              )}
+                            />
+                          ) : (
+                            <Input
+                              id={field.name}
+                              value={editForm[field.name]}
+                              onChange={(event) =>
+                                setEditForm((current) => ({
+                                  ...current,
+                                  [field.name]: event.target.value
+                                }))
+                              }
+                            />
+                          )}
+                        </Field>
+                      ))}
+                    </FieldGroup>
+                  ) : (
+                    <>
+                      <MetadataBlock label="Problem statement" value={project.problem_statement} />
+                      <MetadataBlock label="Research gap" value={project.research_gap} />
+                      <MetadataBlock label="Objectives" value={project.objectives} />
+                      <MetadataBlock label="Methodology" value={project.methodology_summary} />
+                      <MetadataBlock label="Dataset" value={project.dataset_summary} />
+                      <MetadataBlock label="Results" value={project.results_summary} />
+                    </>
+                  )}
                 </CardContent>
               </Card>
 
@@ -197,4 +353,36 @@ function MetadataBlock({ label, value }: { label: string; value: string | null }
       <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{value || "Not provided yet."}</p>
     </div>
   );
+}
+
+function emptyProjectEditForm(): ProjectEditForm {
+  return {
+    research_area: "",
+    thesis_stage: "",
+    problem_statement: "",
+    research_gap: "",
+    objectives: "",
+    methodology_summary: "",
+    dataset_summary: "",
+    results_summary: ""
+  };
+}
+
+function projectToEditForm(project: Project): ProjectEditForm {
+  return {
+    research_area: project.research_area ?? "",
+    thesis_stage: project.thesis_stage ?? "",
+    problem_statement: project.problem_statement ?? "",
+    research_gap: project.research_gap ?? "",
+    objectives: project.objectives ?? "",
+    methodology_summary: project.methodology_summary ?? "",
+    dataset_summary: project.dataset_summary ?? "",
+    results_summary: project.results_summary ?? ""
+  };
+}
+
+function editFormToPayload(form: ProjectEditForm): UpdateProjectPayload {
+  return Object.fromEntries(
+    Object.entries(form).map(([key, value]) => [key, value.trim() === "" ? null : value.trim()])
+  ) as UpdateProjectPayload;
 }

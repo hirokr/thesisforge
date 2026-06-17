@@ -33,6 +33,10 @@ export type CreateProjectPayload = {
   abstract?: string | null;
 };
 
+export type UpdateProjectPayload = Partial<CreateProjectPayload> & {
+  status?: string | null;
+};
+
 export type Document = {
   id: string;
   project_id: string;
@@ -96,6 +100,13 @@ export function createProject(payload: CreateProjectPayload): Promise<Project> {
 
 export function getProject(projectId: string): Promise<Project> {
   return apiRequest<Project>(`/projects/${projectId}`);
+}
+
+export function updateProject(projectId: string, payload: UpdateProjectPayload): Promise<Project> {
+  return apiRequest<Project>(`/projects/${projectId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload)
+  });
 }
 
 export function listProjectDocuments(projectId: string): Promise<Document[]> {

@@ -56,6 +56,8 @@ class Document(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     document_type: Mapped[str] = mapped_column(String(80), default="thesis_draft", nullable=False)
     size_bytes: Mapped[int | None] = mapped_column(Integer)
     status: Mapped[str] = mapped_column(String(50), default="uploaded", nullable=False)
+    raw_text: Mapped[str | None] = mapped_column(Text)
+    parse_status: Mapped[str] = mapped_column(String(50), default="pending", nullable=False)
 
     project: Mapped["ThesisProject"] = relationship(back_populates="documents")
     chunks: Mapped[list["DocumentChunk"]] = relationship(back_populates="document", cascade="all, delete-orphan")

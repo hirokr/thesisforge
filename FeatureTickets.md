@@ -615,6 +615,8 @@ Build the ThesisForge project overview page. Fetch project details by ID, displa
 
 **Priority:** Should-have
 
+**Status:** Done
+
 **Description:**
 Allow users to edit thesis project metadata after creation.
 
@@ -648,6 +650,8 @@ Add edit project functionality to ThesisForge. Allow users to update thesis meta
 ## TF-021: Build Pasted Text Document API
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Add backend API for users to paste thesis content directly instead of uploading files.
