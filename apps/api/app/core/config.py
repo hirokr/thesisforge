@@ -1,6 +1,15 @@
 from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+PRODUCTION_ENVS = {"production", "staging"}
+PRODUCTION_REQUIRED_SETTINGS = (
+    "database_url",
+    "supabase_jwt_secret",
+    "openai_api_key",
+)
 
 
 class Settings(BaseSettings):
@@ -19,9 +28,31 @@ class Settings(BaseSettings):
     band_project_id: str = ""
     redis_url: str = "redis://localhost:6379/0"
     analysis_queue_name: str = "thesisforge-analysis"
-    analysis_job_timeout_seconds: int = 1800
+    analysis_job_timeout_seconds: int = Field(default=1800, ge=1)
+    rate_limit_window_seconds: int = Field(default=60, ge=1)
+    rate_limit_file_uploads_per_window: int = Field(default=60, ge=1)
+    rate_limit_analysis_runs_per_window: int = Field(default=20, ge=1)
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+
+def validate_startup_settings(settings: Settings) -> None:
+    missing = required_missing_settings(settings)
+    if missing:
+        joined = ", ".join(missing)
+        raise RuntimeError(f"Missing required backend environment variable(s) for {settings.app_env}: {joined}")
+
+
+def required_missing_settings(settings: Settings) -> list[str]:
+    if settings.app_env.lower() not in PRODUCTION_ENVS:
+        return []
+
+    missing: list[str] = []
+    for setting_name in PRODUCTION_REQUIRED_SETTINGS:
+        value = getattr(settings, setting_name)
+        if value is None or (isinstance(value, str) and not value.strip()):
+            missing.append(setting_name.upper())
+    return missing
 
 
 @lru_cache

@@ -1855,6 +1855,8 @@ Add secure file upload validation to ThesisForge. Validate file size, MIME type,
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Protect agents from following malicious instructions inside uploaded thesis content.
 
@@ -1877,6 +1879,8 @@ Add prompt injection guardrails to all ThesisForge agent prompts. Ensure uploade
 ## TF-061: Add API Rate Limits
 
 **Priority:** Should-have
+
+**Status:** Done
 
 **Description:**
 Add basic rate limiting for sensitive backend routes.
@@ -1906,6 +1910,8 @@ Add basic rate limiting to ThesisForge backend routes for file upload, starting 
 ## TF-062: Create Environment Configuration Layer
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Create centralized backend and frontend configuration handling.

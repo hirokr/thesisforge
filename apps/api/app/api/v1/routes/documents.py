@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, File, Form, Response, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.auth import AuthenticatedUser, get_current_user
+from app.core.rate_limit import file_upload_rate_limit
 from app.db.session import get_db
 from app.schemas.document import DocumentRead, DocumentTextCreate, DocumentTextRead
 from app.services.documents import (
@@ -34,6 +35,7 @@ def list_project_documents_route(
 def create_text_document_route(
     project_id: UUID,
     payload: DocumentTextCreate,
+    _rate_limit: None = Depends(file_upload_rate_limit),
     current_user: AuthenticatedUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> DocumentTextRead:
@@ -54,6 +56,7 @@ def upload_document_route(
     project_id: UUID,
     document_type: str = Form(..., min_length=1, max_length=80),
     file: UploadFile = File(...),
+    _rate_limit: None = Depends(file_upload_rate_limit),
     current_user: AuthenticatedUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> DocumentRead:

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.auth import AuthenticatedUser, get_current_user
+from app.core.rate_limit import analysis_run_rate_limit
 from app.db.session import get_db
 from app.models import AgentMessage
 from app.schemas.analysis_run import AgentMessageRead, AnalysisRunCreate, AnalysisRunRead, AnalysisRunStatus
@@ -24,6 +25,7 @@ router = APIRouter(tags=["analysis-runs"])
 def create_analysis_run_route(
     project_id: UUID,
     payload: AnalysisRunCreate | None = None,
+    _rate_limit: None = Depends(analysis_run_rate_limit),
     current_user: AuthenticatedUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> AnalysisRunRead:
