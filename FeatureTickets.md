@@ -1013,6 +1013,8 @@ Implement the Research Gap Agent for ThesisForge. It should evaluate the user’
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Implement the Citation Agent, which checks whether thesis claims appear to be supported by provided references.
 
@@ -1036,6 +1038,8 @@ Implement the Citation Agent for ThesisForge. It should compare thesis claims wi
 ## TF-034: Build Methodology Consistency Agent
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Implement the Methodology Consistency Agent, which checks whether the methodology matches the research gap, objectives, datasets, and results.
@@ -1069,6 +1073,8 @@ Implement the Methodology Consistency Agent for ThesisForge. It should check whe
 ## TF-035: Build Results Interpretation Agent
 
 **Priority:** Should-have
+
+**Status:** Done
 
 **Description:**
 Implement the Results Interpretation Agent, which reviews result summaries and identifies overclaiming, weak comparisons, or missing analysis.
