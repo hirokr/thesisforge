@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
+import { useToast } from "@/components/ui/toast";
 import {
   getProject,
   listProjectDocuments,
@@ -18,6 +19,7 @@ import {
   type Document,
   type Project
 } from "@/lib/api";
+import { friendlyErrorMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
 type ReviewType = "full_review" | "research_gap_review" | "defense_preparation";
@@ -59,6 +61,7 @@ export default function RunReviewPage() {
   const [isStarting, setIsStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   async function loadReviewWorkspace() {
     setIsLoading(true);
@@ -73,7 +76,7 @@ export default function RunReviewPage() {
       setProject(projectResponse);
       setDocuments(documentsResponse);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not load review workspace.");
+      setError(friendlyErrorMessage(err, "permission"));
     } finally {
       setIsLoading(false);
     }
@@ -95,9 +98,12 @@ export default function RunReviewPage() {
       const run = await startAnalysisRun(projectId, {
         include_results_agent: selectedReviewType.includeResultsAgent
       });
+      toast({ title: "Analysis started", description: "The thesis review is now queued.", variant: "success" });
       router.push(`/projects/${projectId}/runs/${run.id}`);
     } catch (err) {
-      setStartError(err instanceof Error ? err.message : "Could not start thesis review.");
+      const message = friendlyErrorMessage(err, "analysis");
+      setStartError(message);
+      toast({ title: "Could not start analysis", description: message, variant: "error" });
     } finally {
       setIsStarting(false);
     }

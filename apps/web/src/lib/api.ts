@@ -165,7 +165,8 @@ export type CreateSupervisorFeedbackPayload = {
 export class ApiError extends Error {
   constructor(
     message: string,
-    public readonly status: number
+    public readonly status: number,
+    public readonly code?: string
   ) {
     super(message);
     this.name = "ApiError";
@@ -191,7 +192,8 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   });
 
   if (!response.ok) {
-    throw new ApiError(await getErrorMessage(response), response.status);
+    const error = await getErrorPayload(response);
+    throw new ApiError(error.message, response.status, error.code);
   }
 
   if (response.status === 204) {
@@ -296,18 +298,21 @@ export function deleteTask(taskId: string): Promise<void> {
   });
 }
 
-async function getErrorMessage(response: Response): Promise<string> {
+async function getErrorPayload(response: Response): Promise<{ message: string; code?: string }> {
   try {
-    const body = (await response.json()) as { detail?: unknown; message?: unknown };
+    const body = (await response.json()) as { code?: unknown; detail?: unknown; message?: unknown };
     if (typeof body.message === "string") {
-      return body.message;
+      return {
+        message: body.message,
+        code: typeof body.code === "string" ? body.code : undefined
+      };
     }
     if (typeof body.detail === "string") {
-      return body.detail;
+      return { message: body.detail };
     }
   } catch {
-    return "Request failed.";
+    return { message: "Request failed." };
   }
 
-  return "Request failed.";
+  return { message: "Request failed." };
 }

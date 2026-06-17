@@ -247,6 +247,27 @@ def test_upload_document_stores_metadata_and_file(db: Session, tmp_path: Path, m
     assert document.storage_path == body["storage_path"]
 
 
+def test_upload_document_sanitizes_filename(db: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    records = seed_documents(db)
+    client = client_for(db)
+    monkeypatch.setattr(
+        "app.services.documents.get_settings",
+        lambda: SimpleNamespace(upload_storage_dir=str(tmp_path)),
+    )
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents",
+        data={"document_type": "thesis_draft"},
+        files={"file": ("../Draft Chapter (final).txt", b"Chapter text", "text/plain; charset=utf-8")},
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["filename"] == "Draft-Chapter-final-.txt"
+    assert Path(body["storage_path"]).name.endswith("-Draft-Chapter-final-.txt")
+    assert Path(body["storage_path"]).read_bytes() == b"Chapter text"
+
+
 def test_upload_pdf_extracts_text_and_creates_chunks(db: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     records = seed_documents(db)
     client = client_for(db)
@@ -526,7 +547,7 @@ def test_upload_csv_saves_summary_metadata(db: Session, tmp_path: Path, monkeypa
     assert document.parse_metadata == body["parse_metadata"]
 
 
-def test_upload_empty_csv_marks_parse_failed(db: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_upload_empty_file_is_rejected(db: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     records = seed_documents(db)
     client = client_for(db)
     monkeypatch.setattr(
@@ -540,11 +561,9 @@ def test_upload_empty_csv_marks_parse_failed(db: Session, tmp_path: Path, monkey
         files={"file": ("empty.csv", b"", "text/csv")},
     )
 
-    assert response.status_code == 201
-    body = response.json()
-    assert body["status"] == "parse_failed"
-    assert body["parse_status"] == "failed"
-    assert body["parse_metadata"] is None
+    assert response.status_code == 400
+    assert db.scalar(select(Document).where(Document.filename == "empty.csv")) is None
+    assert not any(tmp_path.iterdir())
 
 
 def test_upload_document_rejects_unsupported_type(db: Session) -> None:
@@ -559,6 +578,20 @@ def test_upload_document_rejects_unsupported_type(db: Session) -> None:
 
     assert response.status_code == 400
     assert db.scalar(select(Document).where(Document.filename == "draft.exe")) is None
+
+
+def test_upload_document_rejects_mismatched_content_type(db: Session) -> None:
+    records = seed_documents(db)
+    client = client_for(db)
+
+    response = client.post(
+        f"/api/v1/projects/{records['project'].id}/documents",
+        data={"document_type": "thesis_draft"},
+        files={"file": ("draft.pdf", b"%PDF-1.7", "text/plain")},
+    )
+
+    assert response.status_code == 400
+    assert db.scalar(select(Document).where(Document.filename == "draft.pdf")) is None
 
 
 def test_upload_document_rejects_large_file(db: Session) -> None:

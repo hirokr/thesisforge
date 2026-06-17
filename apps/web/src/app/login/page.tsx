@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
+import { friendlyErrorMessage } from "@/lib/errors";
 import { getSafeRedirectPath } from "@/lib/routes";
 import { getSupabaseClient } from "@/lib/supabase-client";
 
@@ -36,6 +38,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -49,8 +52,9 @@ export default function LoginPage() {
 
     if (error) {
       setFormError(error);
+      toast({ title: "Login failed", description: error, variant: "error" });
     }
-  }, []);
+  }, [toast]);
 
   async function onSubmit(values: LoginFormValues) {
     setIsSubmitting(true);
@@ -61,13 +65,17 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithPassword(values);
 
       if (error) {
-        setFormError("Invalid email or password.");
+        const message = "Invalid email or password.";
+        setFormError(message);
+        toast({ title: "Login failed", description: message, variant: "error" });
         return;
       }
 
       router.push(getNextPath());
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Could not log in.");
+      const message = friendlyErrorMessage(error, "auth");
+      setFormError(message);
+      toast({ title: "Login failed", description: message, variant: "error" });
     } finally {
       setIsSubmitting(false);
     }

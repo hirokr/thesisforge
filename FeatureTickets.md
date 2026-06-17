@@ -1800,6 +1800,8 @@ Add a global error handling system to the FastAPI backend. Return consistent saf
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Create a consistent frontend system for showing success, warning, and error messages.
 
@@ -1825,6 +1827,8 @@ Implement a frontend toast and error handling system for ThesisForge. Convert ba
 ## TF-059: Add File Upload Security Validation
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Add security checks for uploaded files.

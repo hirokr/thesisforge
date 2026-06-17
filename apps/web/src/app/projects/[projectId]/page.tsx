@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import {
   type ActionTask,
@@ -30,6 +31,7 @@ import {
   type SupervisorFeedback,
   type UpdateProjectPayload
 } from "@/lib/api";
+import { friendlyErrorMessage } from "@/lib/errors";
 
 type ProjectEditForm = {
   research_area: string;
@@ -86,6 +88,7 @@ export default function ProjectOverviewPage() {
   const [taskError, setTaskError] = useState<string | null>(null);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const { toast } = useToast();
 
   async function loadProject() {
     setIsLoading(true);
@@ -106,7 +109,7 @@ export default function ProjectOverviewPage() {
       setTasks(tasksResponse);
       setFeedback(feedbackResponse);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not load project.");
+      setError(friendlyErrorMessage(err, "permission"));
     } finally {
       setIsLoading(false);
     }
@@ -151,7 +154,9 @@ export default function ProjectOverviewPage() {
       setShowSuccessToast(true);
       window.setTimeout(() => setShowSuccessToast(false), 3500);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Could not save project details.");
+      const message = friendlyErrorMessage(err);
+      setSaveError(message);
+      toast({ title: "Save failed", description: message, variant: "error" });
     } finally {
       setIsSaving(false);
     }
@@ -166,7 +171,9 @@ export default function ProjectOverviewPage() {
       const updatedTask = await updateTaskStatus(taskId, status);
       setTasks((currentTasks) => currentTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task)));
     } catch (err) {
-      setTaskError(err instanceof Error ? err.message : "Could not update task.");
+      const message = friendlyErrorMessage(err);
+      setTaskError(message);
+      toast({ title: "Task update failed", description: message, variant: "error" });
     } finally {
       setIsUpdatingTask(false);
       setUpdatingTaskId(null);
@@ -194,7 +201,9 @@ export default function ProjectOverviewPage() {
       setFeedbackSource("manual");
       setFeedbackDate("");
     } catch (err) {
-      setFeedbackError(err instanceof Error ? err.message : "Could not save supervisor feedback.");
+      const message = friendlyErrorMessage(err);
+      setFeedbackError(message);
+      toast({ title: "Feedback save failed", description: message, variant: "error" });
     } finally {
       setIsSavingFeedback(false);
     }

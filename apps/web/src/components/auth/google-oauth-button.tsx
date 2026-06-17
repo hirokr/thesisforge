@@ -4,11 +4,13 @@ import { Chrome } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { getSupabaseClient } from "@/lib/supabase-client";
 
 export function GoogleOAuthButton() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const { toast } = useToast();
 
   async function continueWithGoogle() {
     setErrorMessage(null);
@@ -25,7 +27,9 @@ export function GoogleOAuthButton() {
 
     if (error) {
       setIsRedirecting(false);
-      setErrorMessage("Could not start Google login. Try again.");
+      const message = "Could not start Google login. Try again.";
+      setErrorMessage(message);
+      toast({ title: "Google login failed", description: message, variant: "error" });
     }
   }
 

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import {
   createTextDocument,
   getProject,
@@ -20,6 +21,7 @@ import {
   type Document,
   type Project
 } from "@/lib/api";
+import { friendlyErrorMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
 const documentTypes = [
@@ -46,6 +48,7 @@ export default function ProjectUploadPage() {
   const [error, setError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [textError, setTextError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   async function loadPage() {
     setIsLoading(true);
@@ -59,7 +62,7 @@ export default function ProjectUploadPage() {
       setProject(projectResponse);
       setDocuments(documentResponse);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not load upload workspace.");
+      setError(friendlyErrorMessage(err, "permission"));
     } finally {
       setIsLoading(false);
     }
@@ -84,7 +87,9 @@ export default function ProjectUploadPage() {
     setFileError(null);
 
     if (!selectedFile) {
-      setFileError("Choose a file to upload.");
+      const message = "Choose a file to upload.";
+      setFileError(message);
+      toast({ title: "No file selected", description: message, variant: "warning" });
       return;
     }
 
@@ -94,8 +99,11 @@ export default function ProjectUploadPage() {
       setSelectedFile(null);
       event.currentTarget.reset();
       await reloadDocuments();
+      toast({ title: "File uploaded", description: "The document was added to this project.", variant: "success" });
     } catch (err) {
-      setFileError(err instanceof Error ? err.message : "Could not upload file.");
+      const message = friendlyErrorMessage(err, "upload");
+      setFileError(message);
+      toast({ title: "Upload failed", description: message, variant: "error" });
     } finally {
       setIsUploadingFile(false);
     }
@@ -106,12 +114,16 @@ export default function ProjectUploadPage() {
     setTextError(null);
 
     if (!textTitle.trim()) {
-      setTextError("Enter a document title.");
+      const message = "Enter a document title.";
+      setTextError(message);
+      toast({ title: "Title required", description: message, variant: "warning" });
       return;
     }
 
     if (!rawText.trim()) {
-      setTextError("Paste document text before submitting.");
+      const message = "Paste document text before submitting.";
+      setTextError(message);
+      toast({ title: "Text required", description: message, variant: "warning" });
       return;
     }
 
@@ -125,8 +137,11 @@ export default function ProjectUploadPage() {
       setTextTitle("");
       setRawText("");
       await reloadDocuments();
+      toast({ title: "Text saved", description: "The pasted document was added and parsed.", variant: "success" });
     } catch (err) {
-      setTextError(err instanceof Error ? err.message : "Could not save pasted text.");
+      const message = friendlyErrorMessage(err, "upload");
+      setTextError(message);
+      toast({ title: "Save failed", description: message, variant: "error" });
     } finally {
       setIsSubmittingText(false);
     }

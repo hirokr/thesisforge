@@ -12,12 +12,14 @@ import { AgentTimeline } from "@/components/review/agent-timeline";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/components/ui/toast";
 import {
   getAnalysisRunStatus,
   getProject,
   type AnalysisRunStatus,
   type Project
 } from "@/lib/api";
+import { friendlyErrorMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
 const POLL_INTERVAL_MS = 4000;
@@ -32,6 +34,7 @@ export default function AnalysisRunProgressPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const isTerminal = runStatus ? terminalStatuses.has(runStatus.status) : false;
   const progress = clampProgress(runStatus?.progress_percentage ?? 0);
@@ -52,7 +55,9 @@ export default function AnalysisRunProgressPage() {
       setProject(projectResponse);
       setRunStatus(statusResponse);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not load analysis run.");
+      const message = friendlyErrorMessage(err, "analysis");
+      setError(message);
+      toast({ title: "Analysis status unavailable", description: message, variant: "error" });
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);

@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
+import { friendlyErrorMessage } from "@/lib/errors";
 import { getSupabaseClient } from "@/lib/supabase-client";
 
 const registerSchema = z
@@ -35,6 +37,7 @@ export default function RegisterPage() {
   const [formMessage, setFormMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -63,7 +66,9 @@ export default function RegisterPage() {
       });
 
       if (error) {
-        setFormError(error.message || "Could not create your account.");
+        const message = error.message || "Could not create your account.";
+        setFormError(message);
+        toast({ title: "Signup failed", description: message, variant: "error" });
         return;
       }
 
@@ -72,9 +77,13 @@ export default function RegisterPage() {
         return;
       }
 
-      setFormMessage("Check your email to verify your account before logging in.");
+      const message = "Check your email to verify your account before logging in.";
+      setFormMessage(message);
+      toast({ title: "Account created", description: message, variant: "success" });
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Could not create your account.");
+      const message = friendlyErrorMessage(error, "auth");
+      setFormError(message);
+      toast({ title: "Signup failed", description: message, variant: "error" });
     } finally {
       setIsSubmitting(false);
     }

@@ -19,12 +19,15 @@ from app.services.pdf_parser import parse_pdf_document
 
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 SUPPORTED_UPLOAD_EXTENSIONS = {".pdf", ".docx", ".txt", ".bib", ".csv"}
-UPLOAD_CONTENT_TYPES = {
-    ".bib": "text/plain",
-    ".csv": "text/csv",
-    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ".pdf": "application/pdf",
-    ".txt": "text/plain",
+UPLOAD_CONTENT_TYPES: dict[str, set[str]] = {
+    ".bib": {"text/plain", "application/x-bibtex", "text/x-bibtex"},
+    ".csv": {"text/csv", "application/csv", "application/vnd.ms-excel"},
+    ".docx": {"application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
+    ".pdf": {"application/pdf"},
+    ".txt": {"text/plain"},
+}
+DEFAULT_CONTENT_TYPES = {
+    extension: sorted(content_types)[0] for extension, content_types in UPLOAD_CONTENT_TYPES.items()
 }
 
 
@@ -79,22 +82,17 @@ def create_uploaded_document(
     upload: UploadFile,
 ) -> Document:
     project = require_owned_project(db, current_user, project_id)
-    original_filename = Path(upload.filename or "").name
-    extension = Path(original_filename).suffix.lower()
-    if not original_filename or extension not in SUPPORTED_UPLOAD_EXTENSIONS:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unsupported file type. Upload PDF, DOCX, TXT, BIB, or CSV files only.",
-        )
-
+    safe_filename, extension, content_type = _validate_upload_metadata(upload)
     contents = upload.file.read(MAX_UPLOAD_BYTES + 1)
     if len(contents) > MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Files must be 25 MB or smaller.")
+    if not contents:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Uploaded files cannot be empty.")
 
     document = Document(
         project_id=project.id,
-        filename=original_filename,
-        content_type=upload.content_type or UPLOAD_CONTENT_TYPES[extension],
+        filename=safe_filename,
+        content_type=content_type,
         document_type=document_type,
         size_bytes=len(contents),
         status="uploaded",
@@ -106,7 +104,7 @@ def create_uploaded_document(
     storage_root = Path(get_settings().upload_storage_dir)
     project_dir = storage_root / str(project.id)
     project_dir.mkdir(parents=True, exist_ok=True)
-    stored_filename = f"{document.id}-{_safe_filename(original_filename)}"
+    stored_filename = f"{document.id}-{safe_filename}"
     storage_path = project_dir / stored_filename
     storage_path.write_bytes(contents)
 
@@ -134,3 +132,30 @@ def delete_document(db: Session, current_user: AuthenticatedUser, document_id: U
 def _safe_filename(filename: str) -> str:
     safe = re.sub(r"[^A-Za-z0-9._-]+", "-", Path(filename).name).strip(".-")
     return safe or "upload"
+
+
+def _validate_upload_metadata(upload: UploadFile) -> tuple[str, str, str]:
+    original_filename = Path(upload.filename or "").name
+    extension = Path(original_filename).suffix.lower()
+    if not original_filename or extension not in SUPPORTED_UPLOAD_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unsupported file type. Upload PDF, DOCX, TXT, BIB, or CSV files only.",
+        )
+
+    content_type = _normalize_content_type(upload.content_type)
+    if content_type not in UPLOAD_CONTENT_TYPES[extension]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File content type does not match the allowed type for this extension.",
+        )
+
+    safe_filename = _safe_filename(original_filename)
+    if Path(safe_filename).suffix.lower() != extension:
+        safe_filename = f"{safe_filename}{extension}"
+
+    return safe_filename, extension, content_type or DEFAULT_CONTENT_TYPES[extension]
+
+
+def _normalize_content_type(content_type: str | None) -> str:
+    return (content_type or "").split(";", 1)[0].strip().lower()
