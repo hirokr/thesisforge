@@ -18,6 +18,7 @@ from app.agents.research_gap import ResearchGapAgent
 from app.agents.results_interpretation import ResultsInterpretationAgent
 from app.models import Agent, AgentMessage, AnalysisRun, CitationCheck, Document, DocumentChunk, Reference, Report, ThesisProject
 from app.services.agent_messages import AgentMessageCreate, create_local_agent_message, send_agent_message_via_band
+from app.services.analytics import log_analytics_event
 from app.services.band_service import BandService, BandServiceError
 from app.services.llm_service import LLMService
 
@@ -359,6 +360,15 @@ class ThesisReviewWorkflow:
     def _mark_completed(self, db: Session, analysis_run: AnalysisRun) -> None:
         analysis_run.status = "completed"
         analysis_run.completed_at = datetime.now(UTC)
+        log_analytics_event(
+            db,
+            event_name="analysis_completed",
+            project_id=analysis_run.project_id,
+            actor_user_id=analysis_run.project.owner_id,
+            entity_type="analysis_run",
+            entity_id=analysis_run.id,
+            details={"status": analysis_run.status, "overall_score": analysis_run.overall_score},
+        )
         db.commit()
         db.refresh(analysis_run)
 

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.auth import AuthenticatedUser
 from app.core.config import get_settings
 from app.models import AgentMessage, AnalysisRun, ThesisProject
+from app.services.analytics import log_analytics_event
 from app.services.ownership import require_owned_analysis_run, require_owned_project, require_profile_for_auth_user
 from app.workers.analysis_runs import run_analysis_workflow_job
 
@@ -28,6 +29,16 @@ def create_analysis_run(db: Session, current_user: AuthenticatedUser, project_id
     project = require_owned_project(db, current_user, project_id)
     analysis_run = AnalysisRun(project_id=project.id, status="queued")
     db.add(analysis_run)
+    db.flush()
+    log_analytics_event(
+        db,
+        event_name="analysis_started",
+        project_id=project.id,
+        actor_user_id=project.owner_id,
+        entity_type="analysis_run",
+        entity_id=analysis_run.id,
+        details={"status": analysis_run.status},
+    )
     db.commit()
     db.refresh(analysis_run)
     return analysis_run

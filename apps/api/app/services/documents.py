@@ -10,6 +10,7 @@ from app.core.auth import AuthenticatedUser
 from app.core.config import get_settings
 from app.models import Document
 from app.schemas.document import DocumentTextCreate
+from app.services.analytics import log_analytics_event
 from app.services.bibtex_parser import parse_bibtex_document
 from app.services.chunking import count_words, replace_document_chunks
 from app.services.csv_parser import parse_csv_document
@@ -68,6 +69,23 @@ def create_text_document(
     db.flush()
 
     chunks = replace_document_chunks(db, document.id, payload.raw_text)
+    log_analytics_event(
+        db,
+        event_name="document_uploaded",
+        project_id=project.id,
+        actor_user_id=project.owner_id,
+        entity_type="document",
+        entity_id=document.id,
+        details={
+            "document_type": document.document_type,
+            "content_type": document.content_type,
+            "parse_status": document.parse_status,
+            "source": "pasted_text",
+            "size_bytes": document.size_bytes,
+            "chunk_count": len(chunks),
+            "word_count": word_count,
+        },
+    )
 
     db.commit()
     db.refresh(document)
@@ -117,6 +135,23 @@ def create_uploaded_document(
         parse_bibtex_document(db, document)
     elif extension == ".csv":
         parse_csv_document(db, document)
+
+    log_analytics_event(
+        db,
+        event_name="document_uploaded",
+        project_id=project.id,
+        actor_user_id=project.owner_id,
+        entity_type="document",
+        entity_id=document.id,
+        details={
+            "document_type": document.document_type,
+            "content_type": document.content_type,
+            "parse_status": document.parse_status,
+            "source": "file_upload",
+            "size_bytes": document.size_bytes,
+            "extension": extension,
+        },
+    )
 
     db.commit()
     db.refresh(document)

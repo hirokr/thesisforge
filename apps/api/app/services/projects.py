@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.auth import AuthenticatedUser
 from app.models import ThesisProject
 from app.schemas.project import ProjectCreate, ProjectUpdate
+from app.services.analytics import log_analytics_event
 from app.services.ownership import reject_owner_id_update, require_owned_project
 from app.services.user_profiles import get_or_create_user_profile
 
@@ -14,6 +15,16 @@ def create_project(db: Session, current_user: AuthenticatedUser, payload: Projec
     profile = get_or_create_user_profile(db, current_user)
     project = ThesisProject(owner_id=profile.id, **payload.model_dump())
     db.add(project)
+    db.flush()
+    log_analytics_event(
+        db,
+        event_name="project_created",
+        project_id=project.id,
+        actor_user_id=profile.id,
+        entity_type="project",
+        entity_id=project.id,
+        details={"status": project.status, "thesis_stage": project.thesis_stage},
+    )
     db.commit()
     db.refresh(project)
     return project

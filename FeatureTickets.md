@@ -2104,6 +2104,8 @@ Write a polished README for the ThesisForge GitHub repository. Include product o
 
 **Priority:** Nice-to-have
 
+**Status:** Done
+
 **Description:**
 Track important product events for MVP success metrics.
 

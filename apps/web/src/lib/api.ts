@@ -282,6 +282,13 @@ export function getReport(reportId: string): Promise<Report> {
   return apiRequest<Report>(`/reports/${reportId}`);
 }
 
+export function trackReportEvent(reportId: string, eventName: "report_viewed" | "report_copied"): Promise<void> {
+  return apiRequest<void>(`/reports/${reportId}/events`, {
+    method: "POST",
+    body: JSON.stringify({ event_name: eventName })
+  });
+}
+
 export function listProjectTasks(projectId: string): Promise<ActionTask[]> {
   return apiRequest<ActionTask[]>(`/projects/${projectId}/tasks`);
 }

@@ -12,7 +12,7 @@ import { PriorityFixList } from "@/components/report/priority-fix-list";
 import { OverallScoreCard, ScoreBreakdownCards } from "@/components/report/score-cards";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getProject, getReport, type Report } from "@/lib/api";
+import { getProject, getReport, trackReportEvent, type Report } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 type ToastState = {
@@ -63,6 +63,7 @@ export default function FinalReportPage() {
     setIsCopying(true);
     try {
       await navigator.clipboard.writeText(getReportMarkdown(report));
+      void trackReportEvent(report.id, "report_copied").catch(() => undefined);
       showToast("Report copied to clipboard.", "success");
     } catch {
       showToast("Copy failed.", "danger");
