@@ -44,6 +44,7 @@ class ThesisProject(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     action_tasks: Mapped[list["ActionTask"]] = relationship(back_populates="project", cascade="all, delete-orphan")
     supervisor_feedback: Mapped[list["SupervisorFeedback"]] = relationship(back_populates="project", cascade="all, delete-orphan")
     audit_logs: Mapped[list["AuditLog"]] = relationship(back_populates="project", cascade="all, delete-orphan")
+    agent_messages: Mapped[list["AgentMessage"]] = relationship(back_populates="project", cascade="all, delete-orphan")
 
 
 class Document(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -111,7 +112,7 @@ class Agent(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     temperature: Mapped[float] = mapped_column(Float, default=0.2, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
-    messages: Mapped[list["AgentMessage"]] = relationship(back_populates="agent")
+    messages: Mapped[list["AgentMessage"]] = relationship(back_populates="agent", foreign_keys="AgentMessage.agent_id")
     findings: Mapped[list["AgentFinding"]] = relationship(back_populates="agent")
 
 
@@ -136,13 +137,25 @@ class AgentMessage(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "agent_messages"
 
     analysis_run_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), ForeignKey("analysis_runs.id", ondelete="CASCADE"), index=True, nullable=False)
+    project_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), ForeignKey("thesis_projects.id", ondelete="CASCADE"), index=True)
     agent_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), ForeignKey("agents.id", ondelete="SET NULL"), index=True)
+    from_agent_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), ForeignKey("agents.id", ondelete="SET NULL"), index=True)
+    to_agent_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), ForeignKey("agents.id", ondelete="SET NULL"), index=True)
     role: Mapped[str] = mapped_column(String(50), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    message_type: Mapped[str] = mapped_column(String(80), default="handoff", nullable=False)
+    task: Mapped[str | None] = mapped_column(String(255))
+    summary: Mapped[str | None] = mapped_column(Text)
+    payload: Mapped[dict | None] = mapped_column(JSON)
+    band_message_id: Mapped[str | None] = mapped_column(String(255), index=True)
+    status: Mapped[str] = mapped_column(String(50), default="pending", nullable=False)
     extra_metadata: Mapped[dict | None] = mapped_column("metadata", JSON)
 
     analysis_run: Mapped["AnalysisRun"] = relationship(back_populates="messages")
-    agent: Mapped["Agent"] = relationship(back_populates="messages")
+    project: Mapped["ThesisProject"] = relationship(back_populates="agent_messages")
+    agent: Mapped["Agent"] = relationship(back_populates="messages", foreign_keys=[agent_id])
+    from_agent: Mapped["Agent | None"] = relationship(foreign_keys=[from_agent_id])
+    to_agent: Mapped["Agent | None"] = relationship(foreign_keys=[to_agent_id])
 
 
 class AgentFinding(UUIDPrimaryKeyMixin, TimestampMixin, Base):

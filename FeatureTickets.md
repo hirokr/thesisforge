@@ -1168,6 +1168,8 @@ Implement the Report Generator Agent for ThesisForge. It should combine all agen
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Create a backend service for interacting with Band Agent API.
 
@@ -1198,6 +1200,8 @@ Create a Band service wrapper in the FastAPI backend. It should support validati
 ## TF-039: Store Agent Messages Locally
 
 **Priority:** Must-have for launch
+
+**Status:** Done
 
 **Description:**
 Every agent handoff or event sent through Band should also be stored in the local `agent_messages` table.

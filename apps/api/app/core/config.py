@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     llm_default_provider: str = "openai"
     llm_default_model: str = "gpt-4.1-mini"
+    band_api_base_url: str = "https://app.band.ai/api/v1/agent"
+    band_api_key: str = ""
+    band_project_id: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
