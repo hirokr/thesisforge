@@ -204,7 +204,7 @@ export default function RunReviewPage() {
 
                 {startError ? <FieldError>{startError}</FieldError> : null}
 
-                <Button onClick={() => void startReview()} disabled={isStarting || hasBlockingWarnings}>
+                <Button className="w-full" onClick={() => void startReview()} disabled={isStarting || hasBlockingWarnings}>
                   {isStarting ? <RefreshCw className="size-4 animate-spin" /> : <Play className="size-4" />}
                   {isStarting ? "Starting review" : "Start analysis run"}
                 </Button>

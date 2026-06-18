@@ -2187,6 +2187,8 @@ Add helpful empty states across ThesisForge. Each empty state should explain wha
 
 **Priority:** Should-have
 
+**Status:** Done
+
 **Description:**
 Ensure the app works properly on mobile and tablet screens.
 

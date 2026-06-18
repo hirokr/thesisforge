@@ -118,18 +118,18 @@ export default function FinalReportPage() {
               {report?.title ?? "Review the generated report, scores, fixes, and defense preparation notes."}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <Button asChild variant="outline" className="w-full sm:w-auto">
               <Link href={`/projects/${projectId}/review`}>
                 <Play className="size-4" />
                 Run review again
               </Link>
             </Button>
-            <Button onClick={() => void copyReport()} disabled={!report || isCopying}>
+            <Button className="w-full sm:w-auto" onClick={() => void copyReport()} disabled={!report || isCopying}>
               <ClipboardCopy className="size-4" />
               Copy report
             </Button>
-            <Button variant="outline" onClick={downloadMarkdown} disabled={!report || isDownloading}>
+            <Button variant="outline" className="w-full sm:w-auto" onClick={downloadMarkdown} disabled={!report || isDownloading}>
               <Download className="size-4" />
               Download markdown
             </Button>
@@ -154,7 +154,7 @@ export default function FinalReportPage() {
           />
         ) : report ? (
           <>
-            <section className="grid gap-4 lg:grid-cols-[280px_1fr]">
+            <section className="grid gap-4 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
               <OverallScoreCard score={report.overall_score} createdAt={report.created_at} />
               <ScoreBreakdownCards scoreBreakdown={report.score_breakdown} />
             </section>
@@ -182,7 +182,7 @@ export default function FinalReportPage() {
                 <CardDescription>Full generated report content.</CardDescription>
               </CardHeader>
               <CardContent>
-                <pre className="max-h-[560px] overflow-auto whitespace-pre-wrap rounded-md border border-border bg-muted p-4 text-sm leading-6 text-foreground">
+                <pre className="max-h-[560px] max-w-full overflow-auto whitespace-pre-wrap break-words rounded-md border border-border bg-muted p-4 text-sm leading-6 text-foreground">
                   {report.content || "No markdown report content was included."}
                 </pre>
               </CardContent>
@@ -197,7 +197,7 @@ export default function FinalReportPage() {
 function ReportPageSkeleton() {
   return (
     <div className="grid gap-6" aria-label="Loading final report">
-      <section className="grid gap-4 lg:grid-cols-[280px_1fr]">
+      <section className="grid gap-4 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
         <Card>
           <CardHeader>
             <Skeleton className="h-5 w-28" />

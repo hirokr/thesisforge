@@ -204,7 +204,7 @@ export default function ProjectUploadPage() {
                       <FieldError>{fileError}</FieldError>
                     </Field>
                     <div className="flex justify-end">
-                      <Button type="submit" disabled={isUploadingFile}>
+                      <Button type="submit" className="w-full sm:w-auto" disabled={isUploadingFile}>
                         {isUploadingFile ? <RefreshCw className="size-4 animate-spin" /> : <Upload className="size-4" />}
                         {isUploadingFile ? "Uploading" : "Upload file"}
                       </Button>
@@ -242,7 +242,7 @@ export default function ProjectUploadPage() {
                       <FieldError>{textError}</FieldError>
                     </Field>
                     <div className="flex justify-end">
-                      <Button type="submit" disabled={isSubmittingText}>
+                      <Button type="submit" className="w-full sm:w-auto" disabled={isSubmittingText}>
                         {isSubmittingText ? <RefreshCw className="size-4 animate-spin" /> : <Send className="size-4" />}
                         {isSubmittingText ? "Saving" : "Save text"}
                       </Button>
@@ -258,7 +258,7 @@ export default function ProjectUploadPage() {
                   <CardTitle>Uploaded documents</CardTitle>
                   <CardDescription>{documents.length === 0 ? "No documents added yet." : `${documents.length} project documents.`}</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => void reloadDocuments()}>
+                <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => void reloadDocuments()}>
                   <RefreshCw className="size-4" />
                   Refresh
                 </Button>
@@ -391,7 +391,7 @@ function DocumentRow({ document }: { document: Document }) {
           <FileText className="size-4" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-foreground">{document.filename}</p>
+          <p className="break-words text-sm font-medium text-foreground">{document.filename}</p>
           <div className="mt-2 flex flex-wrap gap-2">
             <Badge variant="outline">{formatDocumentType(document.document_type)}</Badge>
             <ParseStatusBadge status={document.parse_status} />

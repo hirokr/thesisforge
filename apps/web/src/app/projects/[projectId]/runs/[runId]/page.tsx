@@ -127,7 +127,7 @@ export default function AnalysisRunProgressPage() {
                     {isTerminal ? "Polling has stopped because the run reached a final state." : "This page refreshes automatically every 4 seconds."}
                   </CardDescription>
                 </div>
-                <Button variant="outline" onClick={() => void loadRunStatus()} disabled={isRefreshing}>
+                <Button variant="outline" className="w-full sm:w-auto" onClick={() => void loadRunStatus()} disabled={isRefreshing}>
                   <RefreshCw className={cn("size-4", isRefreshing && "animate-spin")} />
                   Refresh
                 </Button>
@@ -169,7 +169,7 @@ export default function AnalysisRunProgressPage() {
                         </p>
                       </div>
                     </div>
-                    <Button asChild>
+                    <Button asChild className="w-full sm:w-auto">
                       <Link href="/reports">
                         <ScrollText className="size-4" />
                         View report

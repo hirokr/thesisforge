@@ -87,7 +87,7 @@ export function AgentTimeline({ runStatus, currentAgent, progressPercentage }: A
                       {status}
                     </Badge>
                   </div>
-                  <h3 className="text-sm font-semibold leading-5 text-foreground">{agent.name}</h3>
+                  <h3 className="break-words text-sm font-semibold leading-5 text-foreground">{agent.name}</h3>
                   <p className="mt-2 min-h-12 text-xs leading-5 text-muted-foreground">{agent.description}</p>
                 </div>
               </li>

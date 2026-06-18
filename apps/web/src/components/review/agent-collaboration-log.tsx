@@ -63,7 +63,7 @@ export function AgentCollaborationLog({ runId, isLive }: AgentCollaborationLogPr
           <CardTitle>Agent collaboration log</CardTitle>
           <CardDescription>{isLive ? "Band handoffs update while the review is active." : "Band handoffs saved for this run."}</CardDescription>
         </div>
-        <Button variant="outline" onClick={() => void loadMessages()} disabled={isRefreshing}>
+        <Button variant="outline" className="w-full sm:w-auto" onClick={() => void loadMessages()} disabled={isRefreshing}>
           <RefreshCw className={cn("size-4", isRefreshing && "animate-spin")} />
           Refresh
         </Button>
@@ -100,7 +100,7 @@ export function AgentCollaborationLog({ runId, isLive }: AgentCollaborationLogPr
                       <ArrowRight className="size-4 text-muted-foreground" />
                       <span>{formatAgent(message.to_agent_name, message.to_agent_slug, "Workflow")}</span>
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{message.summary || message.content}</p>
+                    <p className="mt-2 break-words text-sm leading-6 text-muted-foreground">{message.summary || message.content}</p>
                   </div>
                   <div className="flex shrink-0 flex-wrap gap-2">
                     <Badge variant="outline">{formatLabel(message.message_type)}</Badge>

@@ -76,12 +76,12 @@ export default function DashboardPage() {
             <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
             <p className="mt-2 text-sm text-muted-foreground">Track thesis projects, recent progress, and report readiness.</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => void handleLoadDemoProject()} disabled={isLoadingDemo}>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button variant="outline" className="w-full sm:w-auto" onClick={() => void handleLoadDemoProject()} disabled={isLoadingDemo}>
               {isLoadingDemo ? <RefreshCw className="size-4 animate-spin" /> : <FlaskConical className="size-4" />}
               Load demo project
             </Button>
-            <Button asChild>
+            <Button asChild className="w-full sm:w-auto">
               <Link href="/projects/new">
                 <FolderPlus className="size-4" />
                 Create project
@@ -124,12 +124,12 @@ export default function DashboardPage() {
             title="No projects yet"
             description="Create your first thesis project to start reviewing drafts and research materials."
             action={
-              <div className="flex flex-wrap justify-center gap-2">
-                <Button variant="outline" onClick={() => void handleLoadDemoProject()} disabled={isLoadingDemo}>
+              <div className="flex w-full flex-col justify-center gap-2 sm:w-auto sm:flex-row">
+                <Button variant="outline" className="w-full sm:w-auto" onClick={() => void handleLoadDemoProject()} disabled={isLoadingDemo}>
                   {isLoadingDemo ? <RefreshCw className="size-4 animate-spin" /> : <FlaskConical className="size-4" />}
                   Load demo project
                 </Button>
-                <Button asChild>
+                <Button asChild className="w-full sm:w-auto">
                   <Link href="/projects/new">
                     <FolderPlus className="size-4" />
                     Create project

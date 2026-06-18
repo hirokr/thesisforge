@@ -256,13 +256,13 @@ export default function ProjectOverviewPage() {
                 <p className="mt-2 text-sm text-muted-foreground">{project.research_area || "Research area not set"}</p>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row">
-                <Button asChild variant="outline">
+                <Button asChild variant="outline" className="w-full sm:w-auto">
                   <Link href={`/projects/${project.id}/upload`}>
                     <FileUp className="size-4" />
                     Upload documents
                   </Link>
                 </Button>
-                <Button asChild>
+                <Button asChild className="w-full sm:w-auto">
                   <Link href={`/projects/${project.id}/review`}>
                     <Play className="size-4" />
                     Run thesis review
@@ -289,18 +289,18 @@ export default function ProjectOverviewPage() {
                     <CardDescription>Core context for the review agents.</CardDescription>
                   </div>
                   {isEditing ? (
-                    <div className="flex gap-2">
-                      <Button variant="outline" onClick={cancelEditing} disabled={isSaving}>
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                      <Button variant="outline" className="w-full sm:w-auto" onClick={cancelEditing} disabled={isSaving}>
                         <X className="size-4" />
                         Cancel
                       </Button>
-                      <Button onClick={() => void saveProjectDetails()} disabled={isSaving}>
+                      <Button className="w-full sm:w-auto" onClick={() => void saveProjectDetails()} disabled={isSaving}>
                         {isSaving ? <RefreshCw className="size-4 animate-spin" /> : <Save className="size-4" />}
                         Save
                       </Button>
                     </div>
                   ) : (
-                    <Button variant="outline" onClick={startEditing}>
+                    <Button variant="outline" className="w-full sm:w-auto" onClick={startEditing}>
                       <Pencil className="size-4" />
                       Edit details
                     </Button>
@@ -594,7 +594,7 @@ function SummaryCard({ label, value, detail }: { label: string; value: string; d
         <CardTitle className="text-2xl">{value}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground">{detail}</p>
+        <p className="break-words text-sm text-muted-foreground">{detail}</p>
       </CardContent>
     </Card>
   );
@@ -604,7 +604,7 @@ function MetadataBlock({ label, value }: { label: string; value: string | null }
   return (
     <div className="rounded-md border border-border bg-background p-4">
       <h2 className="text-sm font-medium text-foreground">{label}</h2>
-      <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{value || "Not provided yet."}</p>
+      <p className="mt-2 whitespace-pre-wrap break-words text-sm text-muted-foreground">{value || "Not provided yet."}</p>
     </div>
   );
 }
@@ -616,7 +616,7 @@ function FeedbackRow({ feedback }: { feedback: SupervisorFeedback }) {
         <Badge variant="outline">{formatFeedbackSource(feedback.source)}</Badge>
         {feedback.feedback_date ? <span className="text-xs text-muted-foreground">{formatDate(feedback.feedback_date)}</span> : null}
       </div>
-      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{feedback.feedback_text}</p>
+      <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">{feedback.feedback_text}</p>
     </article>
   );
 }

@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { APP_NAME, navItems } from "@/lib/constants";
 
-export function Navbar() {
+export function Navbar({ onOpenNavigation }: { onOpenNavigation: () => void }) {
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur">
       <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
-        <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation">
+        <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation" onClick={onOpenNavigation}>
           <Menu aria-hidden="true" />
         </Button>
         <Link href="/dashboard" className="text-base font-semibold text-primary-navy lg:hidden">
@@ -28,8 +28,8 @@ export function Navbar() {
             </Button>
           ))}
         </nav>
-        <Button className="ml-auto md:ml-0" size="sm">
-          New Project
+        <Button asChild className="ml-auto md:ml-0" size="sm">
+          <Link href="/projects/new">New Project</Link>
         </Button>
       </div>
     </header>
