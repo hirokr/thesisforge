@@ -2209,9 +2209,11 @@ Make the ThesisForge frontend responsive. Ensure sidebar, dashboard cards, forms
 
 ---
 
-## TF-073: Add Basic Test Coverage
+## TF-073: C
 
 **Priority:** Should-have
+
+**Status:** Done
 
 **Description:**
 Add basic backend and frontend tests for critical flows.
