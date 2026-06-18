@@ -2136,6 +2136,8 @@ Add basic analytics events to ThesisForge for project creation, document upload,
 
 **Priority:** Should-have
 
+**Status:** Done
+
 **Description:**
 Add loading skeletons across major frontend pages.
 
@@ -2159,6 +2161,8 @@ Add loading skeleton states across ThesisForge frontend pages including dashboar
 ## TF-071: Add Empty States
 
 **Priority:** Should-have
+
+**Status:** Done
 
 **Description:**
 Add helpful empty states across the app.

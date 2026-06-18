@@ -12,6 +12,7 @@ import { AgentTimeline } from "@/components/review/agent-timeline";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import {
   getAnalysisRunStatus,
@@ -103,7 +104,7 @@ export default function AnalysisRunProgressPage() {
         </div>
 
         {isLoading ? (
-          <RunState icon={<RefreshCw className="size-5 animate-spin" />} title="Loading run" description="Fetching the latest analysis status." />
+          <RunProgressSkeleton />
         ) : error ? (
           <RunState
             icon={<AlertCircle className="size-5" />}
@@ -190,6 +191,64 @@ export default function AnalysisRunProgressPage() {
         ) : null}
       </div>
     </AppShell>
+  );
+}
+
+function RunProgressSkeleton() {
+  return (
+    <div className="grid gap-6" aria-label="Loading analysis run">
+      <Card>
+        <CardHeader className="gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-3">
+            <Skeleton className="h-6 w-36" />
+            <Skeleton className="h-4 w-72" />
+          </div>
+          <Skeleton className="h-10 w-24" />
+        </CardHeader>
+        <CardContent className="grid gap-5">
+          <Skeleton className="h-3 w-full rounded-full" />
+          <div className="grid gap-3 md:grid-cols-3">
+            <Skeleton className="h-24" />
+            <Skeleton className="h-24" />
+            <Skeleton className="h-24" />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-36" />
+          <Skeleton className="h-4 w-64" />
+        </CardHeader>
+        <CardContent>
+          <ol className="grid gap-3 lg:grid-cols-7">
+            {Array.from({ length: 7 }).map((_, index) => (
+              <li key={index} className="rounded-md border border-border bg-background p-3">
+                <div className="mb-3 flex items-start justify-between gap-2">
+                  <Skeleton className="size-9" />
+                  <Skeleton className="h-6 w-16" />
+                </div>
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="mt-3 h-3 w-full" />
+                <Skeleton className="mt-2 h-3 w-5/6" />
+              </li>
+            ))}
+          </ol>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-4 w-72" />
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          <Skeleton className="h-16" />
+          <Skeleton className="h-16" />
+          <Skeleton className="h-16" />
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

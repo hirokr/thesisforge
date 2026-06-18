@@ -12,6 +12,7 @@ import { PriorityFixList } from "@/components/report/priority-fix-list";
 import { OverallScoreCard, ScoreBreakdownCards } from "@/components/report/score-cards";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getProject, getReport, trackReportEvent, type Report } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -138,7 +139,7 @@ export default function FinalReportPage() {
         {toast ? <ToastMessage toast={toast} /> : null}
 
         {isLoading ? (
-          <ReportState icon={<RefreshCw className="size-5 animate-spin" />} title="Loading report" description="Fetching the final thesis health report." />
+          <ReportPageSkeleton />
         ) : error ? (
           <ReportState
             icon={<AlertCircle className="size-5" />}
@@ -190,6 +191,84 @@ export default function FinalReportPage() {
         ) : null}
       </div>
     </AppShell>
+  );
+}
+
+function ReportPageSkeleton() {
+  return (
+    <div className="grid gap-6" aria-label="Loading final report">
+      <section className="grid gap-4 lg:grid-cols-[280px_1fr]">
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-5 w-28" />
+            <Skeleton className="h-4 w-36" />
+          </CardHeader>
+          <CardContent className="grid place-items-center gap-4">
+            <Skeleton className="size-32 rounded-full" />
+            <Skeleton className="h-4 w-40" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-5 w-36" />
+            <Skeleton className="h-4 w-56" />
+          </CardHeader>
+          <CardContent className="grid gap-3 sm:grid-cols-2">
+            <Skeleton className="h-20" />
+            <Skeleton className="h-20" />
+            <Skeleton className="h-20" />
+            <Skeleton className="h-20" />
+          </CardContent>
+        </Card>
+      </section>
+
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-44" />
+          <Skeleton className="h-4 w-72" />
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+        </CardContent>
+      </Card>
+
+      <section className="grid gap-4 xl:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            <Skeleton className="h-20" />
+            <Skeleton className="h-20" />
+            <Skeleton className="h-20" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-44" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            <Skeleton className="h-20" />
+            <Skeleton className="h-20" />
+            <Skeleton className="h-20" />
+          </CardContent>
+        </Card>
+      </section>
+
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-48" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-80" />
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

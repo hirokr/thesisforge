@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import {
@@ -230,7 +231,7 @@ export default function ProjectOverviewPage() {
         </Button>
 
         {isLoading ? (
-          <ProjectState icon={<RefreshCw className="size-5 animate-spin" />} title="Loading project" description="Fetching thesis metadata and documents." />
+          <ProjectOverviewSkeleton />
         ) : error || !project ? (
           <ProjectState
             icon={<AlertCircle className="size-5" />}
@@ -464,6 +465,99 @@ export default function ProjectOverviewPage() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+function ProjectOverviewSkeleton() {
+  return (
+    <div className="grid gap-6" aria-label="Loading project overview">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="mb-3 flex gap-2">
+            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-6 w-28" />
+          </div>
+          <Skeleton className="h-8 w-full max-w-lg" />
+          <Skeleton className="mt-3 h-4 w-64" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-10 w-36" />
+          <Skeleton className="h-10 w-36" />
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <Card key={index}>
+            <CardHeader>
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-7 w-20" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-4 w-3/4" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+        <Card>
+          <CardHeader className="gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-3">
+              <Skeleton className="h-6 w-40" />
+              <Skeleton className="h-4 w-56" />
+            </div>
+            <Skeleton className="h-10 w-28" />
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="rounded-md border border-border bg-background p-4">
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="mt-3 h-4 w-full" />
+                <Skeleton className="mt-2 h-4 w-5/6" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-4">
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-48" />
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              <Skeleton className="h-10" />
+              <Skeleton className="h-10" />
+              <Skeleton className="h-10" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-44" />
+              <Skeleton className="h-4 w-56" />
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              <Skeleton className="h-28" />
+              <Skeleton className="h-10" />
+              <Skeleton className="h-20" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-36" />
+          <Skeleton className="h-4 w-64" />
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          <Skeleton className="h-16" />
+          <Skeleton className="h-16" />
+          <Skeleton className="h-16" />
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

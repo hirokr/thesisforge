@@ -31,7 +31,7 @@ export function ActionTaskList({ tasks, isUpdating, updatingTaskId, error, onSta
           <div className="rounded-md border border-border bg-background p-6 text-center">
             <CircleDashed className="mx-auto size-8 text-muted-foreground" />
             <h3 className="mt-3 text-sm font-semibold text-foreground">No action tasks yet</h3>
-            <p className="mt-1 text-sm text-muted-foreground">Generated thesis fixes will appear after a report creates tasks.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Run a review and open the final report to generate prioritized thesis fixes.</p>
           </div>
         ) : (
           groups.map((group) => (

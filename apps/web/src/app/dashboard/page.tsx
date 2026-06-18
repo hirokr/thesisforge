@@ -10,6 +10,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { listProjects, loadDemoProject, type Project } from "@/lib/api";
 
 export default function DashboardPage() {
@@ -104,7 +105,7 @@ export default function DashboardPage() {
         </div>
 
         {isLoading ? (
-          <DashboardState icon={<RefreshCw className="size-5 animate-spin" />} title="Loading projects" description="Fetching your thesis workspace." />
+          <DashboardProjectSkeleton />
         ) : error ? (
           <DashboardState
             icon={<AlertCircle className="size-5" />}
@@ -168,6 +169,37 @@ export default function DashboardPage() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+function DashboardProjectSkeleton() {
+  return (
+    <div className="grid gap-4 lg:grid-cols-2" aria-label="Loading projects">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <Card key={index}>
+          <CardHeader>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <Skeleton className="h-5 w-2/3" />
+                <Skeleton className="mt-3 h-4 w-1/2" />
+              </div>
+              <Skeleton className="h-6 w-20" />
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Skeleton className="h-16" />
+              <Skeleton className="h-16" />
+              <Skeleton className="h-16" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }
 

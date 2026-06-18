@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import {
   createTextDocument,
@@ -168,7 +169,7 @@ export default function ProjectUploadPage() {
         </div>
 
         {isLoading ? (
-          <UploadState icon={<RefreshCw className="size-5 animate-spin" />} title="Loading workspace" description="Fetching project documents." />
+          <UploadPageSkeleton />
         ) : error ? (
           <UploadState
             icon={<AlertCircle className="size-5" />}
@@ -267,6 +268,9 @@ export default function ProjectUploadPage() {
                   <div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-border px-4 py-10 text-center">
                     <FileUp className="size-6 text-muted-foreground" />
                     <p className="text-sm font-medium text-foreground">No uploads yet</p>
+                    <p className="max-w-sm text-sm text-muted-foreground">
+                      Upload a file or paste thesis text here to give the review agents source material.
+                    </p>
                   </div>
                 ) : (
                   <div className="grid gap-3">
@@ -281,6 +285,73 @@ export default function ProjectUploadPage() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+function UploadPageSkeleton() {
+  return (
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]" aria-label="Loading upload workspace">
+      <div className="grid gap-4">
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-28" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <Skeleton className="h-16" />
+            <Skeleton className="h-16" />
+            <div className="flex justify-end">
+              <Skeleton className="h-10 w-28" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-28" />
+            <Skeleton className="h-4 w-56" />
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Skeleton className="h-16" />
+              <Skeleton className="h-16" />
+            </div>
+            <Skeleton className="h-48" />
+            <div className="flex justify-end">
+              <Skeleton className="h-10 w-24" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader className="gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-3">
+            <Skeleton className="h-6 w-44" />
+            <Skeleton className="h-4 w-36" />
+          </div>
+          <Skeleton className="h-9 w-24" />
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="rounded-md border border-border bg-background p-3">
+                <div className="flex items-start gap-3">
+                  <Skeleton className="size-9 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <Skeleton className="h-4 w-3/4" />
+                    <div className="mt-3 flex gap-2">
+                      <Skeleton className="h-6 w-24" />
+                      <Skeleton className="h-6 w-20" />
+                    </div>
+                    <Skeleton className="mt-3 h-3 w-1/2" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
