@@ -77,6 +77,17 @@ class CitationAgent(BaseAgent):
                 "Use chunk IDs, chunk indexes, reference IDs, and citation keys as evidence when available.",
                 "Do not claim external verification, DOI lookup, or web search.",
             ],
+            "citation_check_output_contract": {
+                "type": "array",
+                "item": {
+                    "claim_text": "non-empty string",
+                    "status": "supported | weakly_supported | unsupported | needs_review",
+                    "confidence": "number from 0 to 1, or null",
+                    "notes": "string or null",
+                    "reference_id": "string or null",
+                    "citation_key": "string or null",
+                },
+            },
             "allowed_citation_check_statuses": ["supported", "weakly_supported", "unsupported", "needs_review"],
             "input": input_data,
         }

@@ -116,6 +116,19 @@ def test_citation_agent_handles_missing_references_in_prompt() -> None:
     assert "No references were provided" in llm_service.requests[0].user_prompt
 
 
+def test_citation_agent_defines_the_persisted_check_output_contract() -> None:
+    llm_service = FakeLLMService('{"citation_checks": [], "findings": []}')
+    agent = CitationAgent(llm_service=llm_service)
+
+    agent.run_review(document_chunks=[], references=[], literature_findings=[])
+
+    user_prompt = llm_service.requests[0].user_prompt
+    assert '"claim_text"' in user_prompt
+    assert '"status"' in user_prompt
+    assert '"confidence"' in user_prompt
+    assert '"citation_key"' in user_prompt
+
+
 def test_citation_agent_saves_findings_and_citation_checks(db: Session) -> None:
     records = seed_citation_records(db)
     reference_id: UUID = records["reference"].id
