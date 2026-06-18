@@ -25,3 +25,4 @@ build/
 *.log
 
 submission-assets/*video*
+.vercel
