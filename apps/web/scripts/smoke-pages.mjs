@@ -61,8 +61,17 @@ async function smokeReportPage() {
   assertIncludes(reportPage, "Copy report", "report copy action");
   assertIncludes(reportPage, "Download markdown", "report download action");
   assertIncludes(scoreCards, "Overall score", "score card mock coverage surface");
+  assertIncludes(scoreCards, "literature_gap", "legacy gap score alias");
+  assertIncludes(scoreCards, "methodology_objective_alignment", "legacy methodology score alias");
   assertMatches(priorityFixes, /priority_fixes/, "priority fix mock coverage surface");
   assertMatches(defenseQuestions, /defense_questions/, "defense question mock coverage surface");
+}
+
+async function smokeAgentCollaborationLog() {
+  const source = await readSource("src/components/review/agent-collaboration-log.tsx");
+
+  assertIncludes(source, 'message.message_type === "agent_failure"', "agent failure styling");
+  assertIncludes(source, '"Saved locally"', "Band fallback label");
 }
 
 async function smokePublicEnvironment() {
@@ -89,6 +98,7 @@ await smokeLoginPage();
 await smokeDashboardPage();
 await smokeCreateProjectPage();
 await smokeReportPage();
+await smokeAgentCollaborationLog();
 await smokePublicEnvironment();
 
 console.log("Frontend smoke checks passed: login, dashboard, create project, and report pages.");

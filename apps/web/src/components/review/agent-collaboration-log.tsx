@@ -61,7 +61,7 @@ export function AgentCollaborationLog({ runId, isLive }: AgentCollaborationLogPr
       <CardHeader className="gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <CardTitle>Agent collaboration log</CardTitle>
-          <CardDescription>{isLive ? "Band handoffs update while the review is active." : "Band handoffs saved for this run."}</CardDescription>
+          <CardDescription>{isLive ? "Agent handoffs update while the review is active." : "Agent handoffs saved for this run."}</CardDescription>
         </div>
         <Button variant="outline" className="w-full sm:w-auto" onClick={() => void loadMessages()} disabled={isRefreshing}>
           <RefreshCw className={cn("size-4", isRefreshing && "animate-spin")} />
@@ -85,12 +85,16 @@ export function AgentCollaborationLog({ runId, isLive }: AgentCollaborationLogPr
           />
         ) : (
           <ol className="space-y-3">
-            {messages.map((message) => (
+            {messages.map((message) => {
+              const isAgentFailure = message.message_type === "agent_failure";
+              const isLocalFallback = message.message_type === "handoff" && (message.status === "failed" || message.status === "local");
+
+              return (
               <li
                 key={message.id}
                 className={cn(
                   "rounded-md border border-border bg-background p-4",
-                  message.status === "failed" && "border-danger/40 bg-danger/5"
+                  isAgentFailure && "border-danger/40 bg-danger/5"
                 )}
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -104,7 +108,9 @@ export function AgentCollaborationLog({ runId, isLive }: AgentCollaborationLogPr
                   </div>
                   <div className="flex shrink-0 flex-wrap gap-2">
                     <Badge variant="outline">{formatLabel(message.message_type)}</Badge>
-                    <Badge variant={message.status === "failed" ? "danger" : "secondary"}>{formatLabel(message.status)}</Badge>
+                    <Badge variant={isAgentFailure ? "danger" : "secondary"}>
+                      {isLocalFallback ? "Saved locally" : formatLabel(message.status)}
+                    </Badge>
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
@@ -112,7 +118,8 @@ export function AgentCollaborationLog({ runId, isLive }: AgentCollaborationLogPr
                   {message.task ? <span>{formatLabel(message.task)}</span> : null}
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ol>
         )}
       </CardContent>

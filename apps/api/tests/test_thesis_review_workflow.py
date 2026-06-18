@@ -11,6 +11,7 @@ from app.models import Agent, AgentMessage, AnalysisRun, Document, DocumentChunk
 from app.seeds.agents import DEFAULT_AGENTS
 from app.services.thesis_review_workflow import ThesisReviewWorkflow, WorkflowOptions
 from app.services.llm_service import LLMAuthenticationError
+from app.services.band_service import BandServiceError
 from app.services.thesis_review_workflow import ThesisReviewWorkflowError
 
 
@@ -18,6 +19,7 @@ class FakeBandService:
     def __init__(self) -> None:
         self.created_chats: list[dict[str, Any]] = []
         self.sent_messages: list[dict[str, Any]] = []
+        self.posted_events: list[dict[str, Any]] = []
 
     def create_chat(self, task_id: str, metadata: dict[str, Any] | None = None) -> dict[str, str]:
         self.created_chats.append({"task_id": task_id, "metadata": metadata})
@@ -26,6 +28,18 @@ class FakeBandService:
     def send_message(self, chat_id: str, content: str, mentions: list[dict[str, Any]] | None = None) -> dict[str, str]:
         self.sent_messages.append({"chat_id": chat_id, "content": content, "mentions": mentions})
         return {"id": f"band-message-{len(self.sent_messages)}"}
+
+    def post_event(
+        self,
+        chat_id: str,
+        content: str,
+        message_type: str = "task",
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, str]:
+        self.posted_events.append(
+            {"chat_id": chat_id, "content": content, "message_type": message_type, "metadata": metadata}
+        )
+        return {"id": f"band-event-{len(self.posted_events)}"}
 
 
 class FakeReviewAgent:
@@ -200,10 +214,28 @@ def test_thesis_review_workflow_runs_agents_in_order_and_records_handoffs(db: Se
         "defense-preparation_to_report-generator",
     ]
     assert {message.status for message in messages} == {"sent"}
-    assert len(band_service.sent_messages) == 6
+    assert band_service.sent_messages == []
+    assert len(band_service.posted_events) == 6
+    assert {event["message_type"] for event in band_service.posted_events} == {"task"}
     assert len(report_agent.calls[0]["agent_findings"]) == 6
     assert report_agent.calls[0]["partial_failures"] == []
     assert review_agents["research-gap"].calls[0]["literature_findings"][0]["category"] == "literature-review"
+
+
+def test_thesis_review_workflow_marks_handoffs_local_when_band_chat_is_unavailable(db: Session) -> None:
+    run = seed_workflow_records(db)
+    workflow, _review_agents, _report_agent, band_service = build_workflow()
+
+    def fail_to_create_chat(task_id: str, metadata: dict[str, Any] | None = None) -> dict[str, str]:
+        raise BandServiceError("network unavailable")
+
+    band_service.create_chat = fail_to_create_chat  # type: ignore[method-assign]
+
+    workflow.run(db, analysis_run_id=run.id)
+
+    messages = db.scalars(select(AgentMessage).order_by(AgentMessage.created_at)).all()
+    assert messages
+    assert {message.status for message in messages} == {"local"}
 
 
 def test_thesis_review_workflow_continues_after_non_report_agent_failure(db: Session) -> None:

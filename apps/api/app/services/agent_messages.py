@@ -86,13 +86,14 @@ def post_agent_event_via_band(
     band_service: BandService,
     chat_id: str,
     message: AgentMessageCreate,
+    event_type: str | None = None,
 ) -> AgentMessage:
     record = create_local_agent_message(db, message, status="pending")
     try:
         response = band_service.post_event(
             chat_id,
             message.content or message.summary,
-            message_type=message.message_type,
+            message_type=event_type or message.message_type,
             metadata=message.metadata,
         )
     except BandServiceError:

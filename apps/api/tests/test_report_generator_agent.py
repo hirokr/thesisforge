@@ -83,6 +83,10 @@ def test_report_generator_agent_outputs_expected_sections() -> None:
     assert result.raw_output["score_breakdown"]["gap"] == 70
     assert result.raw_output["priority_fixes"][0]["title"] == "Add a baseline comparison"
     assert "Return both markdown_report and structured_report" in llm_service.requests[0].user_prompt
+    assert '"gap"' in llm_service.requests[0].user_prompt
+    assert '"methodology"' in llm_service.requests[0].user_prompt
+    assert '"results"' in llm_service.requests[0].user_prompt
+    assert "Use exactly these score_breakdown keys" in llm_service.requests[0].user_prompt
 
 
 def test_report_generator_agent_handles_partial_failures_and_defaults() -> None:

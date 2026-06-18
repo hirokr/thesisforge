@@ -19,9 +19,13 @@ type ScoreBreakdownCardsProps = {
 };
 
 const scoreAreas = [
-  { key: "gap", aliases: ["gap_score", "research_gap", "research_gap_score"], label: "Gap score" },
+  { key: "gap", aliases: ["gap_score", "research_gap", "research_gap_score", "literature_gap"], label: "Gap score" },
   { key: "citation", aliases: ["citation_score", "citations", "citation_support"], label: "Citation score" },
-  { key: "methodology", aliases: ["methodology_score", "methodology_consistency"], label: "Methodology score" },
+  {
+    key: "methodology",
+    aliases: ["methodology_score", "methodology_consistency", "methodology_objective_alignment", "baseline_models"],
+    label: "Methodology score"
+  },
   { key: "results", aliases: ["results_score", "results_interpretation"], label: "Results score" },
   { key: "defense", aliases: ["defense_score", "defense_preparation"], label: "Defense score" }
 ] as const;

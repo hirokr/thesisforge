@@ -72,11 +72,20 @@ class ReportGeneratorAgent(BaseAgent):
             "constraints": [
                 "Return both markdown_report and structured_report.",
                 "Include overall_score as a score out of 100 and score_breakdown by review area.",
+                "Use exactly these score_breakdown keys: gap, citation, methodology, results, and defense.",
+                "Set a score_breakdown value to null when its review agent did not run or evidence is unavailable.",
                 "Prioritize fixes by impact on thesis quality and defense risk.",
                 "Carry forward defense questions from the Defense Preparation Agent where available.",
                 "When an upstream agent failed or returned partial output, list it under partial_failures and continue with available evidence.",
                 "Use only supplied project data, findings, citation checks, messages, and defense questions.",
             ],
+            "score_breakdown_contract": {
+                "gap": "number from 0 to 100, or null",
+                "citation": "number from 0 to 100, or null",
+                "methodology": "number from 0 to 100, or null",
+                "results": "number from 0 to 100, or null",
+                "defense": "number from 0 to 100, or null",
+            },
             "has_partial_failures": bool(input_data.get("partial_failures")),
             "input": input_data,
         }

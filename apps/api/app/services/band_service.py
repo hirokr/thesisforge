@@ -49,12 +49,7 @@ class BandService:
         return self._request("GET", "/me")
 
     def create_chat(self, task_id: str, metadata: Mapping[str, Any] | None = None) -> dict[str, Any]:
-        chat: dict[str, Any] = {"task_id": task_id}
-        if self.settings and self.settings.band_project_id:
-            chat["project_id"] = self.settings.band_project_id
-        if metadata:
-            chat["metadata"] = dict(metadata)
-        return self._request("POST", "/chats", {"chat": chat})
+        return self._request("POST", "/chats", {"chat": {}})
 
     def list_peers(self) -> list[BandPeer]:
         payload = self._request("GET", "/peers")
@@ -168,7 +163,15 @@ def _response_json(response: Any) -> dict[str, Any]:
     except ValueError:
         return {}
 
-    return dict(payload) if isinstance(payload, Mapping) else {"items": payload}
+    if not isinstance(payload, Mapping):
+        return {"items": payload}
+
+    data = payload.get("data")
+    if isinstance(data, Mapping):
+        return dict(data)
+    if isinstance(data, list):
+        return {"items": data}
+    return dict(payload)
 
 
 def _path_part(value: str) -> str:

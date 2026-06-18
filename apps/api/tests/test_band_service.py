@@ -53,8 +53,8 @@ def test_validate_agent_identity_calls_band_me_endpoint() -> None:
     ]
 
 
-def test_create_chat_sends_task_and_project_metadata() -> None:
-    client = FakeBandClient(FakeResponse(201, {"id": "chat-id", "task_id": "run-id"}))
+def test_create_chat_sends_only_fields_supported_by_band() -> None:
+    client = FakeBandClient(FakeResponse(201, {"data": {"id": "chat-id", "task_id": None}}))
     service = make_service(client, band_project_id="project-id")
 
     response = service.create_chat("run-id", metadata={"source": "thesisforge"})
@@ -62,13 +62,7 @@ def test_create_chat_sends_task_and_project_metadata() -> None:
     assert response["id"] == "chat-id"
     assert client.calls[0]["method"] == "POST"
     assert client.calls[0]["url"] == "https://band.test/api/v1/agent/chats"
-    assert client.calls[0]["json"] == {
-        "chat": {
-            "task_id": "run-id",
-            "project_id": "project-id",
-            "metadata": {"source": "thesisforge"},
-        }
-    }
+    assert client.calls[0]["json"] == {"chat": {}}
 
 
 def test_list_peers_normalizes_items() -> None:

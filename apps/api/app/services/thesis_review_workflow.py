@@ -17,7 +17,7 @@ from app.agents.report_generator import ReportGeneratorAgent
 from app.agents.research_gap import ResearchGapAgent
 from app.agents.results_interpretation import ResultsInterpretationAgent
 from app.models import Agent, AgentMessage, AnalysisRun, CitationCheck, Document, DocumentChunk, Reference, Report, ThesisProject
-from app.services.agent_messages import AgentMessageCreate, create_local_agent_message, send_agent_message_via_band
+from app.services.agent_messages import AgentMessageCreate, create_local_agent_message, post_agent_event_via_band
 from app.services.analytics import log_analytics_event
 from app.services.band_service import BandService, BandServiceError
 from app.services.llm_service import LLMAuthenticationError, LLMService
@@ -335,9 +335,15 @@ class ThesisReviewWorkflow:
             metadata={"analysis_run_id": str(state.analysis_run.id), "project_id": str(state.project.id)},
         )
         if options.use_band and chat_id:
-            send_agent_message_via_band(db, band_service=self.band_service, chat_id=chat_id, message=message)
+            post_agent_event_via_band(
+                db,
+                band_service=self.band_service,
+                chat_id=chat_id,
+                message=message,
+                event_type="task",
+            )
         else:
-            create_local_agent_message(db, message, status="sent" if not options.use_band else "failed")
+            create_local_agent_message(db, message, status="sent" if not options.use_band else "local")
 
     def _create_band_chat(
         self,
