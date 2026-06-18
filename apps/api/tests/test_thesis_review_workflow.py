@@ -10,6 +10,8 @@ from app.db.base import Base
 from app.models import Agent, AgentMessage, AnalysisRun, Document, DocumentChunk, Reference, Report, ThesisProject, UserProfile
 from app.seeds.agents import DEFAULT_AGENTS
 from app.services.thesis_review_workflow import ThesisReviewWorkflow, WorkflowOptions
+from app.services.llm_service import LLMAuthenticationError
+from app.services.thesis_review_workflow import ThesisReviewWorkflowError
 
 
 class FakeBandService:
@@ -27,13 +29,16 @@ class FakeBandService:
 
 
 class FakeReviewAgent:
-    def __init__(self, slug: str, *, should_fail: bool = False) -> None:
+    def __init__(self, slug: str, *, should_fail: bool = False, failure: Exception | None = None) -> None:
         self.slug = slug
         self.should_fail = should_fail
+        self.failure = failure
         self.calls: list[dict[str, Any]] = []
 
     def run_and_save(self, db: Session, **kwargs: Any) -> AgentRunResult:
         self.calls.append(kwargs)
+        if self.failure is not None:
+            raise AgentExecutionError(f"{self.slug} failed") from self.failure
         if self.should_fail:
             raise AgentExecutionError(f"{self.slug} failed")
 
@@ -218,3 +223,18 @@ def test_thesis_review_workflow_continues_after_non_report_agent_failure(db: Ses
     assert review_agents["methodology-consistency"].calls
     assert any(message.message_type == "agent_failure" and message.status == "failed" for message in messages)
     assert all(message.task != "citation_to_methodology-consistency" for message in messages)
+
+
+def test_thesis_review_workflow_stops_after_provider_authentication_failure(db: Session) -> None:
+    run = seed_workflow_records(db)
+    workflow, review_agents, _report_agent, _band_service = build_workflow()
+    review_agents["literature-review"].failure = LLMAuthenticationError(
+        "OpenAI authentication failed. Check OPENAI_API_KEY."
+    )
+
+    with pytest.raises(ThesisReviewWorkflowError, match="OpenAI authentication failed"):
+        workflow.run(db, analysis_run_id=run.id, options=WorkflowOptions(use_band=False))
+
+    assert not review_agents["research-gap"].calls
+    messages = db.scalars(select(AgentMessage).order_by(AgentMessage.created_at)).all()
+    assert [message.task for message in messages] == ["literature-review_failed"]

@@ -28,10 +28,12 @@ services:
         value: authenticated
       - key: OPENAI_API_KEY
         sync: false
+      - key: OPENAI_BASE_URL
+        value: https://api.aimlapi.com/v1
       - key: LLM_DEFAULT_PROVIDER
         value: openai
       - key: LLM_DEFAULT_MODEL
-        value: gpt-4.1-mini
+        value: gpt-4o
       - key: BAND_API_BASE_URL
         value: https://app.band.ai/api/v1/agent
       - key: BAND_API_KEY

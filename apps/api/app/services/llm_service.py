@@ -12,6 +12,10 @@ class LLMServiceError(RuntimeError):
     """Raised when an LLM request cannot be completed safely."""
 
 
+class LLMAuthenticationError(LLMServiceError):
+    """Raised when the configured provider credential is rejected."""
+
+
 @dataclass(frozen=True)
 class LLMRequest:
     system_prompt: str
@@ -31,7 +35,7 @@ class LLMResponse:
 
 
 class OpenAIClientFactory(Protocol):
-    def __call__(self, *, api_key: str) -> Any:
+    def __call__(self, *, api_key: str, base_url: str | None = None) -> Any:
         ...
 
 
@@ -58,6 +62,8 @@ class LLMService:
             raise
         except Exception as exc:
             logger.exception("LLM provider request failed.", extra={"provider": provider, "model": model})
+            if getattr(exc, "status_code", None) == 401:
+                raise LLMAuthenticationError("OpenAI authentication failed. Check OPENAI_API_KEY.") from exc
             raise LLMServiceError("LLM provider request failed.") from exc
 
         logger.info("LLM request succeeded.", extra={"provider": provider, "model": model})
@@ -86,15 +92,16 @@ class LLMService:
         return LLMResponse(text=text, usage=usage, provider="openai", model=returned_model)
 
     def _get_openai_client(self) -> Any:
+        base_url = self.settings.openai_base_url.strip() or None
         if self._openai_client_factory is not None:
-            return self._openai_client_factory(api_key=self.settings.openai_api_key)
+            return self._openai_client_factory(api_key=self.settings.openai_api_key, base_url=base_url)
 
         try:
             from openai import OpenAI
         except ImportError as exc:
             raise LLMServiceError("OpenAI SDK is not installed.") from exc
 
-        return OpenAI(api_key=self.settings.openai_api_key)
+        return OpenAI(api_key=self.settings.openai_api_key, base_url=base_url)
 
 
 def _extract_text(completion: Any) -> str:

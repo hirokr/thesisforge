@@ -47,9 +47,10 @@ services:
       RATE_LIMIT_FILE_UPLOADS_PER_WINDOW: 60
       RATE_LIMIT_ANALYSIS_RUNS_PER_WINDOW: 20
       LLM_DEFAULT_PROVIDER: openai
-      LLM_DEFAULT_MODEL: gpt-4.1-mini
+      LLM_DEFAULT_MODEL: ${LLM_DEFAULT_MODEL:-gpt-4o}
       SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.aimlapi.com/v1}
       BAND_API_BASE_URL: ${BAND_API_BASE_URL:-https://app.band.ai/api/v1/agent}
       BAND_API_KEY: ${BAND_API_KEY:-}
       BAND_PROJECT_ID: ${BAND_PROJECT_ID:-}
@@ -76,8 +77,9 @@ services:
       ANALYSIS_QUEUE_NAME: thesisforge-analysis
       ANALYSIS_JOB_TIMEOUT_SECONDS: 1800
       LLM_DEFAULT_PROVIDER: openai
-      LLM_DEFAULT_MODEL: gpt-4.1-mini
+      LLM_DEFAULT_MODEL: ${LLM_DEFAULT_MODEL:-gpt-4o}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.aimlapi.com/v1}
       BAND_API_BASE_URL: ${BAND_API_BASE_URL:-https://app.band.ai/api/v1/agent}
       BAND_API_KEY: ${BAND_API_KEY:-}
       BAND_PROJECT_ID: ${BAND_PROJECT_ID:-}

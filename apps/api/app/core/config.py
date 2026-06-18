@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     supabase_jwt_audience: str = "authenticated"
     upload_storage_dir: str = "storage/uploads"
     openai_api_key: str = ""
+    openai_base_url: str = ""
     llm_default_provider: str = "openai"
     llm_default_model: str = "gpt-4.1-mini"
     band_api_base_url: str = "https://app.band.ai/api/v1/agent"

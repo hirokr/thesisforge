@@ -16,6 +16,7 @@ class AnalysisRunRead(BaseModel):
     overall_score: float | None
     current_agent: str | None
     progress_percentage: int
+    agent_statuses: dict[str, str]
     started_at: datetime | None
     completed_at: datetime | None
     created_at: datetime
@@ -30,6 +31,7 @@ class AnalysisRunStatus(BaseModel):
     status: str
     current_agent: str | None
     progress_percentage: int
+    agent_statuses: dict[str, str]
     summary: str | None
     overall_score: float | None
     started_at: datetime | None

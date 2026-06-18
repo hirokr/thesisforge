@@ -20,7 +20,7 @@ from app.models import Agent, AgentMessage, AnalysisRun, CitationCheck, Document
 from app.services.agent_messages import AgentMessageCreate, create_local_agent_message, send_agent_message_via_band
 from app.services.analytics import log_analytics_event
 from app.services.band_service import BandService, BandServiceError
-from app.services.llm_service import LLMService
+from app.services.llm_service import LLMAuthenticationError, LLMService
 
 logger = logging.getLogger(__name__)
 
@@ -275,8 +275,19 @@ class ThesisReviewWorkflow:
             state.agent_results[agent_slug] = runner()
         except AgentExecutionError as exc:
             self._record_failure(db, state, agent_slug, exc)
+            self._raise_for_systemic_failure(db, state, exc)
         except Exception as exc:
             self._record_failure(db, state, agent_slug, exc)
+            self._raise_for_systemic_failure(db, state, exc)
+
+    def _raise_for_systemic_failure(self, db: Session, state: "_WorkflowState", exc: Exception) -> None:
+        authentication_error = _find_cause(exc, LLMAuthenticationError)
+        if authentication_error is None:
+            return
+
+        message = str(authentication_error)
+        self._mark_failed(db, state.analysis_run, message)
+        raise ThesisReviewWorkflowError(message) from exc
 
     def _record_failure(self, db: Session, state: "_WorkflowState", agent_slug: str, exc: Exception) -> None:
         logger.exception("Workflow agent failed.", extra={"agent_slug": agent_slug, "analysis_run_id": str(state.analysis_run.id)})
@@ -542,3 +553,14 @@ def _serialize_agent_messages(messages: Iterable[AgentMessage]) -> list[dict[str
 
 def _display_agent_name(slug: str) -> str:
     return slug.replace("-", " ").title()
+
+
+def _find_cause(exc: BaseException, error_type: type[BaseException]) -> BaseException | None:
+    current: BaseException | None = exc
+    seen: set[int] = set()
+    while current is not None and id(current) not in seen:
+        if isinstance(current, error_type):
+            return current
+        seen.add(id(current))
+        current = current.__cause__ or current.__context__
+    return None

@@ -129,6 +129,56 @@ def test_running_analysis_run_status_reports_progress_from_handoffs() -> None:
         next(db_generator, None)
 
 
+def test_failed_analysis_run_status_reports_persisted_agent_outcomes() -> None:
+    db_generator = make_db()
+    db = next(db_generator)
+    try:
+        client = client_for(db)
+        project = seed_project(db)
+        run = AnalysisRun(project_id=project.id, status="failed")
+        db.add(run)
+        db.flush()
+        db.add_all(
+            [
+                AgentMessage(
+                    analysis_run_id=run.id,
+                    project_id=project.id,
+                    role="assistant",
+                    content="Literature review failed.",
+                    message_type="agent_failure",
+                    task="literature-review_failed",
+                    status="failed",
+                ),
+                AgentMessage(
+                    analysis_run_id=run.id,
+                    project_id=project.id,
+                    role="assistant",
+                    content="Research gap failed.",
+                    message_type="agent_failure",
+                    task="research-gap_failed",
+                    status="failed",
+                ),
+            ]
+        )
+        db.commit()
+
+        response = client.get(f"/api/v1/analysis-runs/{run.id}/status")
+
+        assert response.status_code == 200
+        assert response.json()["agent_statuses"] == {
+            "literature-review": "failed",
+            "research-gap": "failed",
+            "citation": "waiting",
+            "methodology-consistency": "waiting",
+            "results-interpretation": "waiting",
+            "defense-preparation": "waiting",
+            "report-generator": "waiting",
+        }
+    finally:
+        app.dependency_overrides.clear()
+        next(db_generator, None)
+
+
 def test_list_agent_messages_for_owned_analysis_run() -> None:
     db_generator = make_db()
     db = next(db_generator)

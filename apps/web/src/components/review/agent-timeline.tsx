@@ -12,7 +12,7 @@ type AgentStatus = "waiting" | "running" | "completed" | "failed" | "partial";
 type AgentTimelineProps = {
   runStatus: RunStatus;
   currentAgent: string | null;
-  progressPercentage: number;
+  agentStatuses: Record<string, AgentStatus>;
 };
 
 const workflowAgents = [
@@ -53,8 +53,8 @@ const workflowAgents = [
   }
 ] as const;
 
-export function AgentTimeline({ runStatus, currentAgent, progressPercentage }: AgentTimelineProps) {
-  const statuses = getAgentStatuses(runStatus, currentAgent, progressPercentage);
+export function AgentTimeline({ runStatus, currentAgent, agentStatuses }: AgentTimelineProps) {
+  const statuses = getAgentStatuses(runStatus, currentAgent, agentStatuses);
 
   return (
     <Card>
@@ -99,37 +99,17 @@ export function AgentTimeline({ runStatus, currentAgent, progressPercentage }: A
   );
 }
 
-function getAgentStatuses(runStatus: RunStatus, currentAgent: string | null, progressPercentage: number): Record<string, AgentStatus> {
-  const statuses = Object.fromEntries(workflowAgents.map((agent) => [agent.slug, "waiting" as AgentStatus]));
-
-  if (runStatus === "completed") {
-    return Object.fromEntries(workflowAgents.map((agent) => [agent.slug, "completed" as AgentStatus]));
+function getAgentStatuses(
+  runStatus: RunStatus,
+  currentAgent: string | null,
+  agentStatuses: Record<string, AgentStatus>
+): Record<string, AgentStatus> {
+  const statuses = Object.fromEntries(
+    workflowAgents.map((agent) => [agent.slug, agentStatuses[agent.slug] ?? "waiting"])
+  );
+  if (runStatus === "running" && currentAgent && statuses[currentAgent] === "waiting") {
+    statuses[currentAgent] = "running";
   }
-
-  const currentIndex = currentAgent ? workflowAgents.findIndex((agent) => agent.slug === currentAgent) : -1;
-  const inferredCompletedCount = Math.max(0, Math.min(workflowAgents.length, Math.floor((progressPercentage / 100) * workflowAgents.length)));
-  const activeIndex = currentIndex >= 0 ? currentIndex : Math.min(inferredCompletedCount, workflowAgents.length - 1);
-
-  workflowAgents.forEach((agent, index) => {
-    if (index < activeIndex) {
-      statuses[agent.slug] = "completed";
-    }
-  });
-
-  if (runStatus === "failed") {
-    statuses[workflowAgents[activeIndex]?.slug ?? workflowAgents[0].slug] = "failed";
-    return statuses;
-  }
-
-  if (runStatus === "partial") {
-    statuses[workflowAgents[activeIndex]?.slug ?? workflowAgents[0].slug] = "partial";
-    return statuses;
-  }
-
-  if (runStatus === "running") {
-    statuses[workflowAgents[activeIndex]?.slug ?? workflowAgents[0].slug] = "running";
-  }
-
   return statuses;
 }
 

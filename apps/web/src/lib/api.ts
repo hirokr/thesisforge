@@ -83,6 +83,7 @@ export type AnalysisRun = {
   overall_score: number | null;
   current_agent: string | null;
   progress_percentage: number;
+  agent_statuses: Record<string, "waiting" | "running" | "completed" | "failed" | "partial">;
   started_at: string | null;
   completed_at: string | null;
   created_at: string;
@@ -95,7 +96,16 @@ export type StartAnalysisRunPayload = {
 
 export type AnalysisRunStatus = Pick<
   AnalysisRun,
-  "id" | "project_id" | "status" | "current_agent" | "progress_percentage" | "summary" | "overall_score" | "started_at" | "completed_at"
+  | "id"
+  | "project_id"
+  | "status"
+  | "current_agent"
+  | "progress_percentage"
+  | "agent_statuses"
+  | "summary"
+  | "overall_score"
+  | "started_at"
+  | "completed_at"
 >;
 
 export type AgentMessage = {

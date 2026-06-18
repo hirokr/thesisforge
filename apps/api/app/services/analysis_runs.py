@@ -106,6 +106,7 @@ def attach_run_progress(db: Session, analysis_run: AnalysisRun) -> AnalysisRun:
     current_agent, progress_percentage = calculate_run_progress(db, analysis_run)
     setattr(analysis_run, "current_agent", current_agent)
     setattr(analysis_run, "progress_percentage", progress_percentage)
+    setattr(analysis_run, "agent_statuses", calculate_agent_statuses(db, analysis_run, current_agent))
     return analysis_run
 
 
@@ -132,6 +133,36 @@ def calculate_run_progress(db: Session, analysis_run: AnalysisRun) -> tuple[str 
     progress_percentage = min(int(len(completed_agents) / len(WORKFLOW_AGENT_ORDER) * 100), 95)
     current_agent = _next_agent(completed_agents)
     return current_agent, progress_percentage
+
+
+def calculate_agent_statuses(
+    db: Session,
+    analysis_run: AnalysisRun,
+    current_agent: str | None,
+) -> dict[str, str]:
+    statuses = {slug: "waiting" for slug in WORKFLOW_AGENT_ORDER}
+    events = db.execute(
+        select(AgentMessage.message_type, AgentMessage.task).where(
+            AgentMessage.analysis_run_id == analysis_run.id,
+            AgentMessage.task.is_not(None),
+        )
+    ).all()
+
+    for message_type, task in events:
+        if message_type == "handoff":
+            agent_slug = _from_agent_from_handoff_task(task)
+            if agent_slug in statuses:
+                statuses[agent_slug] = "completed"
+        elif message_type == "agent_failure" and task.endswith("_failed"):
+            agent_slug = task.removesuffix("_failed")
+            if agent_slug in statuses:
+                statuses[agent_slug] = "failed"
+
+    if analysis_run.status == "completed":
+        return {slug: "completed" for slug in WORKFLOW_AGENT_ORDER}
+    if analysis_run.status == "running" and current_agent in statuses:
+        statuses[current_agent] = "running"
+    return statuses
 
 
 def list_all_owned_analysis_runs(db: Session, current_user: AuthenticatedUser) -> list[AnalysisRun]:

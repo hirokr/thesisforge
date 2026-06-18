@@ -190,7 +190,7 @@ export default function AnalysisRunProgressPage() {
             <AgentTimeline
               runStatus={runStatus.status}
               currentAgent={runStatus.current_agent}
-              progressPercentage={progress}
+              agentStatuses={runStatus.agent_statuses}
             />
 
             <AgentCollaborationLog runId={runId} isLive={!isTerminal} />

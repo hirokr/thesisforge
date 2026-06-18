@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import pytest
 
 from app.core.config import Settings
-from app.services.llm_service import LLMRequest, LLMService, LLMServiceError
+from app.services.llm_service import LLMAuthenticationError, LLMRequest, LLMService, LLMServiceError
 
 
 class FakeCompletions:
@@ -29,7 +29,7 @@ def test_llm_service_normalizes_openai_response() -> None:
     fake_client = FakeOpenAIClient()
     service = LLMService(
         settings=Settings(openai_api_key="test-key", llm_default_model="gpt-test"),
-        openai_client_factory=lambda api_key: fake_client,
+        openai_client_factory=lambda **kwargs: fake_client,
     )
 
     response = service.complete(
@@ -62,7 +62,7 @@ def test_llm_service_allows_per_request_model_override() -> None:
     fake_client = FakeOpenAIClient()
     service = LLMService(
         settings=Settings(openai_api_key="test-key", llm_default_model="gpt-default"),
-        openai_client_factory=lambda api_key: fake_client,
+        openai_client_factory=lambda **kwargs: fake_client,
     )
 
     response = service.complete(
@@ -72,6 +72,30 @@ def test_llm_service_allows_per_request_model_override() -> None:
     assert response.model == "gpt-agent"
     assert fake_client.completions.calls[0]["model"] == "gpt-agent"
     assert "response_format" not in fake_client.completions.calls[0]
+
+
+def test_llm_service_configures_openai_compatible_base_url() -> None:
+    factory_calls: list[dict[str, str]] = []
+
+    def client_factory(*, api_key: str, base_url: str | None = None) -> FakeOpenAIClient:
+        factory_calls.append({"api_key": api_key, "base_url": base_url or ""})
+        return FakeOpenAIClient()
+
+    service = LLMService(
+        settings=Settings(
+            openai_api_key="aimlapi-key",
+            openai_base_url="https://api.aimlapi.com/v1",
+            llm_default_model="gpt-4o",
+        ),
+        openai_client_factory=client_factory,
+    )
+
+    response = service.complete(LLMRequest(system_prompt="system", user_prompt="user"))
+
+    assert response.model == "gpt-4o"
+    assert factory_calls == [
+        {"api_key": "aimlapi-key", "base_url": "https://api.aimlapi.com/v1"}
+    ]
 
 
 def test_llm_service_rejects_missing_openai_key() -> None:
@@ -94,4 +118,25 @@ def test_llm_service_wraps_provider_errors_without_secret() -> None:
         service.complete(LLMRequest(system_prompt="system", user_prompt="user"))
 
     assert str(exc_info.value) == "LLM provider request failed."
+    assert "secret-key" not in str(exc_info.value)
+
+
+def test_llm_service_classifies_provider_authentication_errors() -> None:
+    class AuthenticationFailure(RuntimeError):
+        status_code = 401
+
+    class RejectingCompletions:
+        def create(self, **kwargs: object) -> object:
+            raise AuthenticationFailure("provider response included a secret")
+
+    client = SimpleNamespace(chat=SimpleNamespace(completions=RejectingCompletions()))
+    service = LLMService(
+        settings=Settings(openai_api_key="secret-key"),
+        openai_client_factory=lambda **kwargs: client,
+    )
+
+    with pytest.raises(LLMAuthenticationError) as exc_info:
+        service.complete(LLMRequest(system_prompt="system", user_prompt="user"))
+
+    assert str(exc_info.value) == "OpenAI authentication failed. Check OPENAI_API_KEY."
     assert "secret-key" not in str(exc_info.value)
