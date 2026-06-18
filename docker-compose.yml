@@ -31,7 +31,8 @@ services:
 
   api:
     build:
-      context: ./apps/api
+      context: .
+      dockerfile: apps/api/Dockerfile
     container_name: thesisforge-api
     environment:
       APP_ENV: development
@@ -53,6 +54,32 @@ services:
       BAND_PROJECT_ID: ${BAND_PROJECT_ID:-}
     ports:
       - "8000:8000"
+    volumes:
+      - ./apps/api/storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: thesisforge-worker
+    command: ["rq", "worker", "thesisforge-analysis", "--url", "redis://redis:6379/0"]
+    environment:
+      APP_ENV: development
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/thesisforge
+      REDIS_URL: redis://redis:6379/0
+      ANALYSIS_QUEUE_NAME: thesisforge-analysis
+      ANALYSIS_JOB_TIMEOUT_SECONDS: 1800
+      LLM_DEFAULT_PROVIDER: openai
+      LLM_DEFAULT_MODEL: gpt-4.1-mini
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      BAND_API_BASE_URL: ${BAND_API_BASE_URL:-https://app.band.ai/api/v1/agent}
+      BAND_API_KEY: ${BAND_API_KEY:-}
+      BAND_PROJECT_ID: ${BAND_PROJECT_ID:-}
     volumes:
       - ./apps/api/storage:/app/storage
     depends_on:

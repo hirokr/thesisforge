@@ -17,7 +17,15 @@ from app.services.documents import create_text_document
 from app.services.projects import create_project
 
 
-DEMO_DIR = Path(__file__).resolve().parents[4] / "examples" / "demo-thesis"
+def find_demo_dir(source_file: Path = Path(__file__)) -> Path:
+    for parent in source_file.resolve().parents:
+        candidate = parent / "examples" / "demo-thesis"
+        if candidate.is_dir():
+            return candidate
+    raise RuntimeError("Demo assets were not found in examples/demo-thesis.")
+
+
+DEMO_DIR = find_demo_dir()
 
 
 def load_demo_project(db: Session, current_user: AuthenticatedUser) -> DemoProjectRead:

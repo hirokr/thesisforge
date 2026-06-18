@@ -47,6 +47,26 @@ OWNERSHIP_TRIGGER_TABLES = {
 def upgrade() -> None:
     op.execute(
         """
+        CREATE SCHEMA IF NOT EXISTS auth;
+
+        DO $migration$
+        BEGIN
+            IF to_regprocedure('auth.uid()') IS NULL THEN
+                EXECUTE $function$
+                    CREATE OR REPLACE FUNCTION auth.uid()
+                    RETURNS uuid
+                    LANGUAGE sql
+                    STABLE
+                    AS 'SELECT NULLIF(current_setting(''request.jwt.claim.sub'', true), '''')::uuid'
+                $function$;
+            END IF;
+        END
+        $migration$;
+        """
+    )
+
+    op.execute(
+        """
         CREATE OR REPLACE FUNCTION public.current_thesisforge_profile_id()
         RETURNS uuid
         LANGUAGE sql

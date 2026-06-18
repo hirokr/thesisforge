@@ -2,6 +2,8 @@ import csv
 import json
 from pathlib import Path
 
+from app.services.demo import find_demo_dir
+
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEMO_DIR = REPO_ROOT / "examples" / "demo-thesis"
@@ -44,3 +46,11 @@ def test_demo_results_csv_has_model_rows() -> None:
         "temporal_fusion_transformer",
     }
     assert all(row["mae_kwh"] for row in rows)
+
+
+def test_demo_directory_can_be_resolved_from_shallow_container_layout(tmp_path: Path) -> None:
+    demo_dir = tmp_path / "examples" / "demo-thesis"
+    demo_dir.mkdir(parents=True)
+    service_file = tmp_path / "app" / "services" / "demo.py"
+
+    assert find_demo_dir(service_file) == demo_dir

@@ -65,9 +65,30 @@ async function smokeReportPage() {
   assertMatches(defenseQuestions, /defense_questions/, "defense question mock coverage surface");
 }
 
+async function smokePublicEnvironment() {
+  const source = await readSource("src/lib/env.ts");
+
+  assertIncludes(
+    source,
+    "NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL",
+    "browser environment mapping"
+  );
+  assertIncludes(
+    source,
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "browser environment mapping"
+  );
+  assertIncludes(
+    source,
+    "NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL",
+    "browser environment mapping"
+  );
+}
+
 await smokeLoginPage();
 await smokeDashboardPage();
 await smokeCreateProjectPage();
 await smokeReportPage();
+await smokePublicEnvironment();
 
 console.log("Frontend smoke checks passed: login, dashboard, create project, and report pages.");

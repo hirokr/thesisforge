@@ -3,7 +3,7 @@ services:
     name: thesisforge-api
     runtime: docker
     dockerfilePath: ./apps/api/Dockerfile
-    dockerContext: ./apps/api
+    dockerContext: .
     plan: starter
     healthCheckPath: /health
     preDeployCommand: alembic upgrade head
