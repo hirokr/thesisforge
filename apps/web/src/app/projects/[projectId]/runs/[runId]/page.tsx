@@ -17,8 +17,10 @@ import { useToast } from "@/components/ui/toast";
 import {
   getAnalysisRunStatus,
   getProject,
+  listProjectReports,
   type AnalysisRunStatus,
-  type Project
+  type Project,
+  type Report
 } from "@/lib/api";
 import { friendlyErrorMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
@@ -32,6 +34,7 @@ export default function AnalysisRunProgressPage() {
   const runId = params.runId;
   const [project, setProject] = useState<Project | null>(null);
   const [runStatus, setRunStatus] = useState<AnalysisRunStatus | null>(null);
+  const [latestReport, setLatestReport] = useState<Report | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +58,10 @@ export default function AnalysisRunProgressPage() {
       ]);
       setProject(projectResponse);
       setRunStatus(statusResponse);
+      if (statusResponse.status === "completed" || statusResponse.status === "partial") {
+        const reports = await listProjectReports(projectId);
+        setLatestReport(reports.find((report) => report.analysis_run_id === runId) ?? reports[0] ?? null);
+      }
     } catch (err) {
       const message = friendlyErrorMessage(err, "analysis");
       setError(message);
@@ -170,9 +177,9 @@ export default function AnalysisRunProgressPage() {
                       </div>
                     </div>
                     <Button asChild className="w-full sm:w-auto">
-                      <Link href="/reports">
+                      <Link href={latestReport ? `/projects/${projectId}/reports/${latestReport.id}` : "/reports"}>
                         <ScrollText className="size-4" />
-                        View report
+                        {latestReport ? "View report" : "Find report"}
                       </Link>
                     </Button>
                   </div>

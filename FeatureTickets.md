@@ -2247,6 +2247,8 @@ Add basic test coverage for ThesisForge. Add backend tests for project creation,
 
 **Priority:** Must-have for launch
 
+**Status:** Done
+
 **Description:**
 Polish the MVP so it is ready for a hackathon demo.
 

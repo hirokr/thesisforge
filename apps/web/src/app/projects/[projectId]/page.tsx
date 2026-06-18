@@ -23,12 +23,14 @@ import {
   type FeedbackSource,
   getProject,
   listProjectFeedback,
+  listProjectReports,
   listProjectTasks,
   listProjectDocuments,
   updateProject,
   updateTaskStatus,
   type Document,
   type Project,
+  type Report,
   type SupervisorFeedback,
   type UpdateProjectPayload
 } from "@/lib/api";
@@ -74,6 +76,7 @@ export default function ProjectOverviewPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [tasks, setTasks] = useState<ActionTask[]>([]);
   const [feedback, setFeedback] = useState<SupervisorFeedback[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [editForm, setEditForm] = useState<ProjectEditForm>(() => emptyProjectEditForm());
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackSource, setFeedbackSource] = useState<FeedbackSource>("manual");
@@ -104,11 +107,13 @@ export default function ProjectOverviewPage() {
         listProjectTasks(projectId),
         listProjectFeedback(projectId)
       ]);
+      const reportsResponse = await listProjectReports(projectId);
       setProject(projectResponse);
       setEditForm(projectToEditForm(projectResponse));
       setDocuments(documentsResponse);
       setTasks(tasksResponse);
       setFeedback(feedbackResponse);
+      setReports(reportsResponse);
     } catch (err) {
       setError(friendlyErrorMessage(err, "permission"));
     } finally {
@@ -121,6 +126,7 @@ export default function ProjectOverviewPage() {
   }, [projectId]);
 
   const latestDocument = useMemo(() => documents[0] ?? null, [documents]);
+  const latestReport = useMemo(() => reports[0] ?? null, [reports]);
 
   function startEditing() {
     if (!project) {
@@ -276,8 +282,8 @@ export default function ProjectOverviewPage() {
               <SummaryCard label="Latest analysis" value="Not run" detail="Analysis workflow is not queued." />
               <SummaryCard
                 label="Latest report"
-                value={project.latest_score === null ? "No score" : `${Math.round(project.latest_score)}%`}
-                detail={project.latest_score === null ? "No generated report yet." : "Report score available."}
+                value={latestReport?.overall_score === null || !latestReport ? "No score" : `${Math.round(latestReport.overall_score)}%`}
+                detail={latestReport ? `Ready: ${latestReport.title}` : "No generated report yet."}
               />
             </div>
 
@@ -380,12 +386,19 @@ export default function ProjectOverviewPage() {
                         Run review
                       </Link>
                     </Button>
-                    <Button asChild variant="outline" className="justify-start" aria-disabled={project.latest_score === null}>
-                      <Link href="/reports">
+                    {latestReport ? (
+                      <Button asChild variant="outline" className="justify-start">
+                        <Link href={`/projects/${project.id}/reports/${latestReport.id}`}>
+                          <ScrollText className="size-4" />
+                          View latest report
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button variant="outline" className="justify-start" disabled>
                         <ScrollText className="size-4" />
-                        View latest report
-                      </Link>
-                    </Button>
+                        No report yet
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
 
