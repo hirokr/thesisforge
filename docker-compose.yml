@@ -39,6 +39,7 @@ services:
       API_V1_PREFIX: /api/v1
       FRONTEND_ORIGIN: http://localhost:3000
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/thesisforge
+      SUPABASE_URL: ${SUPABASE_URL:-}
       REDIS_URL: redis://redis:6379/0
       ANALYSIS_QUEUE_NAME: thesisforge-analysis
       ANALYSIS_JOB_TIMEOUT_SECONDS: 1800

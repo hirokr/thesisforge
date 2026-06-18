@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any
 
 import jwt
@@ -8,6 +9,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.core.config import Settings, get_settings
 
 bearer_scheme = HTTPBearer(auto_error=False)
+ASYMMETRIC_ALGORITHMS = {"ES256", "RS256"}
 
 
 @dataclass(frozen=True)
@@ -25,20 +27,46 @@ def _unauthorized() -> HTTPException:
     )
 
 
-def verify_supabase_jwt(token: str, settings: Settings) -> AuthenticatedUser:
-    if not settings.supabase_jwt_secret:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Authentication is not configured.",
-        )
+def _authentication_not_configured() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail="Authentication is not configured.",
+    )
 
+
+@lru_cache(maxsize=8)
+def _get_jwks_client(jwks_url: str) -> jwt.PyJWKClient:
+    return jwt.PyJWKClient(jwks_url)
+
+
+def verify_supabase_jwt(token: str, settings: Settings) -> AuthenticatedUser:
     try:
-        payload = jwt.decode(
-            token,
-            settings.supabase_jwt_secret,
-            algorithms=["HS256"],
-            audience=settings.supabase_jwt_audience,
-        )
+        algorithm = jwt.get_unverified_header(token).get("alg")
+
+        if algorithm == "HS256":
+            if not settings.supabase_jwt_secret:
+                raise _authentication_not_configured()
+            payload = jwt.decode(
+                token,
+                settings.supabase_jwt_secret,
+                algorithms=["HS256"],
+                audience=settings.supabase_jwt_audience,
+            )
+        elif algorithm in ASYMMETRIC_ALGORITHMS:
+            if not settings.supabase_url:
+                raise _authentication_not_configured()
+            supabase_url = settings.supabase_url.rstrip("/")
+            jwks_client = _get_jwks_client(f"{supabase_url}/auth/v1/.well-known/jwks.json")
+            signing_key = jwks_client.get_signing_key_from_jwt(token)
+            payload = jwt.decode(
+                token,
+                signing_key.key,
+                algorithms=[algorithm],
+                audience=settings.supabase_jwt_audience,
+                issuer=f"{supabase_url}/auth/v1",
+            )
+        else:
+            raise _unauthorized()
     except jwt.PyJWTError as exc:
         raise _unauthorized() from exc
 

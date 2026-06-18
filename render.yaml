@@ -18,6 +18,8 @@ services:
         value: 8000
       - key: DATABASE_URL
         sync: false
+      - key: SUPABASE_URL
+        sync: false
       - key: REDIS_URL
         sync: false
       - key: SUPABASE_JWT_SECRET

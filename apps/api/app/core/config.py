@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
     frontend_origin: str = "http://localhost:3000"
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/thesisforge"
+    supabase_url: str = ""
     supabase_jwt_secret: str = ""
     supabase_jwt_audience: str = "authenticated"
     upload_storage_dir: str = "storage/uploads"
