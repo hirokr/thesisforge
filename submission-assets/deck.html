@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ThesisForge Pitch Deck</title>
+    <style>
+      :root {
+        --paper: #f7f5ef;
+        --panel: #fffefa;
+        --ink: #07111f;
+        --muted: #64706f;
+        --teal: #006d63;
+        --mint: #dff4ee;
+        --amber: #d88718;
+        --line: #d9dfd9;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .slide {
+        position: relative;
+        width: 13.333333in;
+        height: 7.5in;
+        overflow: hidden;
+        page-break-after: always;
+        background:
+          linear-gradient(90deg, rgba(0, 109, 99, 0.08) 1px, transparent 1px),
+          linear-gradient(180deg, rgba(0, 109, 99, 0.08) 1px, transparent 1px),
+          var(--paper);
+        background-size: 0.42in 0.42in;
+        padding: 0.58in 0.68in;
+      }
+
+      .cover {
+        padding: 0;
+        background: #f9f8f3;
+      }
+
+      .cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .kicker {
+        color: var(--teal);
+        font-weight: 800;
+        font-size: 0.18in;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2 {
+        margin: 0;
+        letter-spacing: 0;
+        line-height: 0.95;
+      }
+
+      h1 {
+        max-width: 7.2in;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 0.92in;
+        font-weight: 700;
+      }
+
+      h2 {
+        max-width: 8.3in;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 0.68in;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.22in;
+        line-height: 1.45;
+      }
+
+      .lede {
+        max-width: 5.7in;
+        margin-top: 0.26in;
+        color: #31403f;
+        font-size: 0.25in;
+      }
+
+      .brand {
+        position: absolute;
+        right: 0.68in;
+        top: 0.58in;
+        display: flex;
+        align-items: center;
+        gap: 0.12in;
+        color: var(--teal);
+        font-size: 0.18in;
+        font-weight: 800;
+      }
+
+      .mark {
+        display: grid;
+        width: 0.34in;
+        height: 0.34in;
+        place-items: center;
+        border: 2px solid var(--teal);
+        border-radius: 0.07in;
+        color: var(--teal);
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 0.42in;
+        align-items: center;
+        height: 5.8in;
+        margin-top: 0.3in;
+      }
+
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.22in;
+        margin-top: 0.5in;
+      }
+
+      .panel,
+      .mini-card,
+      .flow-node {
+        background: rgba(255, 254, 250, 0.92);
+        border: 1px solid var(--line);
+        border-radius: 0.08in;
+        box-shadow: 0 0.09in 0.28in rgba(7, 17, 31, 0.08);
+      }
+
+      .panel {
+        padding: 0.3in;
+      }
+
+      .problem-list {
+        display: grid;
+        gap: 0.15in;
+        margin-top: 0.35in;
+      }
+
+      .problem {
+        display: grid;
+        grid-template-columns: 0.34in 1fr;
+        gap: 0.14in;
+        align-items: start;
+        color: #273434;
+        font-size: 0.21in;
+        line-height: 1.35;
+      }
+
+      .badge {
+        display: inline-grid;
+        width: 0.34in;
+        height: 0.34in;
+        place-items: center;
+        border-radius: 999px;
+        background: #fff4df;
+        color: var(--amber);
+        font-weight: 900;
+      }
+
+      .dashboard {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.14in;
+      }
+
+      .score {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: 1.2in 1fr;
+        gap: 0.2in;
+        align-items: center;
+      }
+
+      .ring {
+        display: grid;
+        width: 1.05in;
+        height: 1.05in;
+        place-items: center;
+        border: 0.11in solid var(--teal);
+        border-left-color: var(--mint);
+        border-radius: 999px;
+        font-size: 0.32in;
+        font-weight: 900;
+      }
+
+      .mini-card {
+        min-height: 1.1in;
+        padding: 0.18in;
+      }
+
+      .mini-card strong {
+        display: block;
+        margin-bottom: 0.08in;
+        font-size: 0.18in;
+      }
+
+      .mini-card span {
+        color: var(--muted);
+        font-size: 0.15in;
+        line-height: 1.35;
+      }
+
+      .workflow {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 0.1in;
+        margin-top: 0.48in;
+      }
+
+      .flow-node {
+        min-height: 1.68in;
+        padding: 0.18in 0.13in;
+      }
+
+      .flow-node b {
+        display: grid;
+        width: 0.36in;
+        height: 0.36in;
+        place-items: center;
+        margin-bottom: 0.13in;
+        border-radius: 0.07in;
+        background: var(--teal);
+        color: #fff;
+        font-size: 0.17in;
+      }
+
+      .flow-node strong {
+        display: block;
+        margin-bottom: 0.08in;
+        font-size: 0.16in;
+        line-height: 1.12;
+      }
+
+      .flow-node span {
+        color: var(--muted);
+        font-size: 0.12in;
+        line-height: 1.28;
+      }
+
+      .stat-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.18in;
+        margin-top: 0.5in;
+      }
+
+      .stat {
+        padding: 0.22in;
+        border-top: 0.05in solid var(--teal);
+        background: rgba(255, 254, 250, 0.72);
+      }
+
+      .stat strong {
+        display: block;
+        font-size: 0.34in;
+      }
+
+      .stat span {
+        color: var(--muted);
+        font-size: 0.15in;
+        line-height: 1.3;
+      }
+
+      .stack {
+        display: grid;
+        gap: 0.18in;
+      }
+
+      .tech {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.12in;
+        margin-top: 0.36in;
+      }
+
+      .pill {
+        padding: 0.1in 0.16in;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--panel);
+        color: #20302f;
+        font-size: 0.15in;
+        font-weight: 700;
+      }
+
+      .quote {
+        margin-top: 0.38in;
+        padding-left: 0.25in;
+        border-left: 0.06in solid var(--teal);
+        color: #20302f;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 0.34in;
+        line-height: 1.2;
+      }
+
+      @page {
+        size: 13.333333in 7.5in;
+        margin: 0;
+      }
+
+      @media print {
+        body {
+          background: white;
+        }
+
+        .slide {
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <section class="slide cover">
+      <img src="cover.png" alt="ThesisForge cover" />
+    </section>
+
+    <section class="slide">
+      <div class="brand"><span class="mark">✓</span> ThesisForge</div>
+      <div class="kicker">Problem</div>
+      <div class="grid-2">
+        <div>
+          <h1>Thesis issues are found too late.</h1>
+          <p class="lede">Drafts, references, results, supervisor feedback, and defense prep usually live in separate tools. Students often assemble the thesis before discovering whether the work is coherent and defensible.</p>
+        </div>
+        <div class="panel problem-list">
+          <div class="problem"><span class="badge">!</span><span>Research gaps are broad, outdated, or weakly supported.</span></div>
+          <div class="problem"><span class="badge">!</span><span>Claims drift away from the uploaded references.</span></div>
+          <div class="problem"><span class="badge">!</span><span>Methods and results do not always match the stated objectives.</span></div>
+          <div class="problem"><span class="badge">!</span><span>Defense preparation starts after the risky parts are already written.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="brand"><span class="mark">✓</span> ThesisForge</div>
+      <div class="kicker">Solution</div>
+      <div class="grid-2">
+        <div>
+          <h2>A quality-control workspace for early-stage researchers.</h2>
+          <p class="lede">ThesisForge reviews the work users already have. It turns thesis text, references, result files, and project metadata into a structured report with scores, priorities, citation notes, and defense questions.</p>
+        </div>
+        <div class="panel dashboard">
+          <div class="score"><div class="ring">86</div><p><strong>Thesis Health Report</strong><br />Overall quality score with visible evidence and next actions.</p></div>
+          <div class="mini-card"><strong>Priority Fixes</strong><span>Ranked work items for the highest-risk sections.</span></div>
+          <div class="mini-card"><strong>Citation Checks</strong><span>Claim support, partial matches, and missing references.</span></div>
+          <div class="mini-card"><strong>Defense Questions</strong><span>Likely panel questions with answer guidance.</span></div>
+          <div class="mini-card"><strong>Action Tasks</strong><span>Concrete follow-up tasks users can track.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="brand"><span class="mark">✓</span> ThesisForge</div>
+      <div class="kicker">Agent Workflow</div>
+      <h2>Seven agents review the thesis from different angles.</h2>
+      <p class="lede">The workflow is visible: users see progress, handoffs, collaboration messages, and how the final report was assembled.</p>
+      <div class="workflow">
+        <div class="flow-node"><b>1</b><strong>Literature</strong><span>Coverage, themes, missing synthesis.</span></div>
+        <div class="flow-node"><b>2</b><strong>Research Gap</strong><span>Specificity, currency, defensibility.</span></div>
+        <div class="flow-node"><b>3</b><strong>Citation</strong><span>Claim-to-reference alignment.</span></div>
+        <div class="flow-node"><b>4</b><strong>Methodology</strong><span>Problem, objectives, method fit.</span></div>
+        <div class="flow-node"><b>5</b><strong>Results</strong><span>Interpretation and overclaiming checks.</span></div>
+        <div class="flow-node"><b>6</b><strong>Defense</strong><span>Panel risks and answer points.</span></div>
+        <div class="flow-node"><b>7</b><strong>Report</strong><span>Scores, fixes, tasks, summary.</span></div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="brand"><span class="mark">✓</span> ThesisForge</div>
+      <div class="kicker">Demo Flow</div>
+      <div class="grid-2">
+        <div>
+          <h2>Judges can test the full workflow quickly.</h2>
+          <p class="lede">The app includes a safe synthetic thesis project so reviewers can load data, run the agent workflow, inspect collaboration logs, and open the final report without using private academic material.</p>
+        </div>
+        <div class="stack">
+          <div class="mini-card"><strong>1. Load demo project</strong><span>Creates project metadata, thesis text, references, and result files.</span></div>
+          <div class="mini-card"><strong>2. Start thesis review</strong><span>Queues an asynchronous analysis run through Redis/RQ.</span></div>
+          <div class="mini-card"><strong>3. Watch agent progress</strong><span>Timeline and collaboration log make the review traceable.</span></div>
+          <div class="mini-card"><strong>4. Open final report</strong><span>Scores, fixes, citations, and defense prep are ready to review.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="brand"><span class="mark">✓</span> ThesisForge</div>
+      <div class="kicker">Technology</div>
+      <h2>Built as a real full-stack product.</h2>
+      <p class="lede">The MVP has authenticated project workflows, parsing, background jobs, agent orchestration, report persistence, deployment config, and a safe analytics path that avoids storing private thesis content.</p>
+      <div class="tech">
+        <span class="pill">Next.js</span><span class="pill">React</span><span class="pill">TypeScript</span><span class="pill">Tailwind CSS</span>
+        <span class="pill">FastAPI</span><span class="pill">Pydantic</span><span class="pill">SQLAlchemy</span><span class="pill">Alembic</span>
+        <span class="pill">Postgres</span><span class="pill">Supabase Auth</span><span class="pill">Redis</span><span class="pill">RQ</span>
+        <span class="pill">OpenAI</span><span class="pill">Band</span><span class="pill">Docker</span><span class="pill">Vercel</span><span class="pill">Render</span>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><strong>5</strong><span>file types supported for MVP uploads</span></div>
+        <div class="stat"><strong>7</strong><span>review agents in the workflow</span></div>
+        <div class="stat"><strong>1</strong><span>synthetic demo path for judges</span></div>
+        <div class="stat"><strong>0</strong><span>private thesis text in analytics</span></div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="brand"><span class="mark">✓</span> ThesisForge</div>
+      <div class="kicker">Impact</div>
+      <div class="grid-2">
+        <div>
+          <h2>Better thesis review before submission.</h2>
+          <p class="lede">ThesisForge gives students a clear path from scattered materials to focused revision work, while keeping the product boundary on review, evidence, and preparation.</p>
+          <div class="quote">Academic integrity first: review the thesis, surface risks, and help the student defend stronger work.</div>
+        </div>
+        <div class="panel problem-list">
+          <div class="problem"><span class="badge">✓</span><span>Prioritized fixes reduce last-minute uncertainty.</span></div>
+          <div class="problem"><span class="badge">✓</span><span>Citation notes help strengthen evidence and rigor.</span></div>
+          <div class="problem"><span class="badge">✓</span><span>Defense questions turn vague anxiety into preparation.</span></div>
+          <div class="problem"><span class="badge">✓</span><span>Visible agent handoffs make AI-assisted review traceable.</span></div>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>

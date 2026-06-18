@@ -23,3 +23,5 @@ build/
 # local
 .DS_Store
 *.log
+
+submission-assets/*video*
