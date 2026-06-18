@@ -22,3 +22,9 @@ def test_production_settings_report_missing_required_variables() -> None:
 def test_rate_limit_settings_must_be_positive() -> None:
     with pytest.raises(ValidationError):
         Settings(rate_limit_window_seconds=0)
+
+
+def test_plain_postgres_url_uses_installed_psycopg_driver() -> None:
+    settings = Settings(database_url="postgresql://user:password@localhost/thesisforge")
+
+    assert settings.database_url == "postgresql+psycopg://user:password@localhost/thesisforge"
