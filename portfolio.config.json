@@ -1,0 +1,15 @@
+{
+  "slug": "thesisforge",
+  "title": "ThesisForge",
+  "tagline": "Multi-agent thesis quality control that finds what's weak before submission",
+  "problem": "Thesis work is scattered across disconnected tools (Scholar, Zotero, Word/LaTeX, spreadsheets, supervisor emails), so students often discover a weak research gap, unsupported claims, or a mismatched methodology only after the thesis is already assembled.",
+  "solution": "Built a SaaS-style review workspace where users upload thesis text/PDF/DOCX/BibTeX/CSV and a visible 7-agent pipeline (literature coverage, research gap, citation alignment, methodology consistency, results interpretation, defense prep, report generation) runs asynchronously via Redis/RQ, using Band as the agent collaboration layer, and returns a scored report with priority fixes and defense questions.",
+  "stack": ["Next.js", "TypeScript", "FastAPI", "Python", "PostgreSQL", "Redis", "RQ", "Supabase Auth", "OpenAI", "Band"],
+  "featured": true,
+  "thumbnail": "apps/web/placeholders/dashboardImage.png",
+  "links": {
+    "demo": "https://thesisforge-tan.vercel.app/",
+    "github": "https://github.com/hirokr/thesisforge"
+  },
+  "updatedAt": "2026-09-05"
+}
