@@ -6,7 +6,7 @@
   "solution": "Built a SaaS-style review workspace where users upload thesis text/PDF/DOCX/BibTeX/CSV and a visible 7-agent pipeline (literature coverage, research gap, citation alignment, methodology consistency, results interpretation, defense prep, report generation) runs asynchronously via Redis/RQ, using Band as the agent collaboration layer, and returns a scored report with priority fixes and defense questions.",
   "stack": ["Next.js", "TypeScript", "FastAPI", "Python", "PostgreSQL", "Redis", "RQ", "Supabase Auth", "OpenAI", "Band"],
   "featured": true,
-  "thumbnail": "apps/web/placeholders/dashboardImage.png",
+  "thumbnail": "https://github.com/hirokr/thesisforge/blob/main/apps/web/placeholders/dashboardImage.png",
   "links": {
     "demo": "https://thesisforge-tan.vercel.app/",
     "github": "https://github.com/hirokr/thesisforge"
